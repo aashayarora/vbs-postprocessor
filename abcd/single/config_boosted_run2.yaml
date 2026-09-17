@@ -1,0 +1,54 @@
+sig_base_path: "/ceph/cms/store/user/aaarora/vbsvvh/preselection/"
+bkg_base_path: "/ceph/cms/store/user/aaarora/vbsvvh/preselection/"
+data_base_path: "/ceph/cms/store/user/aaarora/vbsvvh/preselection/"
+
+sig_path: ["*r2*2fj_sig*/*/*.root"]
+bkg_path: ["*r2*2fj_bkg*/*/*.root"]
+data_path: ["*r2*2fj_data*/*/*.root"]
+
+training_features:
+  - lepton_pt: log
+  - lepton_eta: minmax
+  - lepton_phi: minmax
+  - lepton_mass: log
+  - met_pt: log
+  - met_phi: minmax
+  - boosted_h_candidate_pt: log
+  - boosted_h_candidate_eta: minmax
+  - boosted_h_candidate_phi: minmax
+  - boosted_h_candidate_mass: log
+  - boosted_h_candidate_tau21: none
+  - boosted_v_candidate_pt: log
+  - boosted_v_candidate_eta: minmax
+  - boosted_v_candidate_phi: minmax
+  - boosted_v_candidate_mass: log
+  - boosted_v_candidate_tau21: none
+  - mlb_min: log
+
+extra_vars:
+  - weight
+  - boosted_h_candidate_score
+  - boosted_v_candidate_score
+
+constraint_var: "vbs_score"
+
+preselection: "(boosted_h_candidate_score >= 0.1) & (boosted_v_candidate_score >= 0.1)"
+
+learning_rate: 0.0001
+batch_size: 4096
+n_epochs: 1000
+
+architecture: [64, 32, 16]
+bce_weight: 1.0
+disco_lambda: 10.0
+
+closure_n_events_min: 10
+closure_symmetrize: true
+use_batchnorm: true
+dropout: 0.2
+weight_decay: 0.01
+label_smoothing: 0.0
+
+devices: [0]
+
+output: "2FJ_NEW_RUN2"

@@ -1,0 +1,94 @@
+sig_base_path: "~/ceph/vbsvvh/preselection/"
+bkg_base_path: "~/ceph/vbsvvh/preselection/"
+
+sig_path: ["*r2*1fj_sig*/*/*.root"]
+bkg_path: ["*r2*1fj_bkg*/*/*.root"]
+
+training_features:
+  - lepton_pt: log
+  - lepton_eta: minmax
+  - lepton_phi: minmax
+  - lepton_mass: log
+  - met_pt: log
+  - met_phi: minmax
+  - boosted_h_candidate_pt: log
+  - boosted_h_candidate_eta: minmax
+  - boosted_h_candidate_phi: minmax
+  - boosted_h_candidate_mass: log
+  - boosted_h_candidate_tau21: none
+  - boosted_v_candidate_pt: log
+  - boosted_v_candidate_eta: minmax
+  - boosted_v_candidate_phi: minmax
+  - boosted_v_candidate_mass: log
+  - boosted_v_candidate_tau21: none
+  - resolved_mjj_1: log
+  - resolved_mjj_2: log
+  - resolved_mjj_3: log
+  - resolved_mjj_4: log
+  - resolved_mjj_5: log
+  - resolved_ptjj_1: log
+  - resolved_ptjj_2: log
+  - resolved_ptjj_3: log
+  - resolved_ptjj_4: log
+  - resolved_ptjj_5: log
+  - resolved_dR_1: minmax
+  - resolved_dR_2: minmax
+  - resolved_dR_3: minmax
+  - resolved_dR_4: minmax
+  - resolved_dR_5: minmax
+  - vbs_jet1_pt: log
+  - vbs_jet1_eta: minmax
+  - vbs_jet1_phi: minmax
+  - vbs_jet1_mass: log
+  - vbs_jet2_pt: log
+  - vbs_jet2_eta: minmax
+  - vbs_jet2_phi: minmax
+  - vbs_jet2_mass: log
+  - vbs_detajj: minmax
+  - vbs_mjj: log
+
+derived_vars:
+  - resolved_mjj_1_residue_h: "np.where(resolved_mjj_1 > 0, np.abs(resolved_mjj_1 - 125.0), -999.0)"
+  - resolved_mjj_1_residue_w: "np.where(resolved_mjj_1 > 0, np.abs(resolved_mjj_1 - 80.4), -999.0)"
+  - resolved_mjj_1_residue_z: "np.where(resolved_mjj_1 > 0, np.abs(resolved_mjj_1 - 91.2), -999.0)"
+  - resolved_mjj_2_residue_h: "np.where(resolved_mjj_2 > 0, np.abs(resolved_mjj_2 - 125.0), -999.0)"
+  - resolved_mjj_2_residue_w: "np.where(resolved_mjj_2 > 0, np.abs(resolved_mjj_2 - 80.4), -999.0)"
+  - resolved_mjj_2_residue_z: "np.where(resolved_mjj_2 > 0, np.abs(resolved_mjj_2 - 91.2), -999.0)"
+  - resolved_mjj_3_residue_h: "np.where(resolved_mjj_3 > 0, np.abs(resolved_mjj_3 - 125.0), -999.0)"
+  - resolved_mjj_3_residue_w: "np.where(resolved_mjj_3 > 0, np.abs(resolved_mjj_3 - 80.4), -999.0)"
+  - resolved_mjj_3_residue_z: "np.where(resolved_mjj_3 > 0, np.abs(resolved_mjj_3 - 91.2), -999.0)"
+  - resolved_mjj_4_residue_h: "np.where(resolved_mjj_4 > 0, np.abs(resolved_mjj_4 - 125.0), -999.0)"
+  - resolved_mjj_4_residue_w: "np.where(resolved_mjj_4 > 0, np.abs(resolved_mjj_4 - 80.4), -999.0)"
+  - resolved_mjj_4_residue_z: "np.where(resolved_mjj_4 > 0, np.abs(resolved_mjj_4 - 91.2), -999.0)"
+  - resolved_mjj_5_residue_h: "np.where(resolved_mjj_5 > 0, np.abs(resolved_mjj_5 - 125.0), -999.0)"
+  - resolved_mjj_5_residue_w: "np.where(resolved_mjj_5 > 0, np.abs(resolved_mjj_5 - 80.4), -999.0)"
+  - resolved_mjj_5_residue_z: "np.where(resolved_mjj_5 > 0, np.abs(resolved_mjj_5 - 91.2), -999.0)"
+
+auto_include_derived_vars: true
+auto_include_derived_vars_transform: log
+
+constraint_var: vbs_detajj
+
+extra_vars:
+  - weight
+  - boosted_h_candidate_score
+  - boosted_v_candidate_score
+
+preselection: "(boosted_h_candidate_score >= 0.1) | (boosted_v_candidate_score >= 0.1)"
+
+batch_size: 8192
+learning_rate: 0.0001
+n_epochs: 1000
+
+architecture: [64, 32, 16]
+bce_weight: 1.0
+disco_lambda: 10.0
+
+use_batchnorm: true
+dropout: 0.2
+weight_decay: 0.01
+label_smoothing: 0.0
+
+devices: [1]
+
+output: "1FJ_NEW_RUN2"

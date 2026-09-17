@@ -1,0 +1,66 @@
+sig_base_path: "~/ceph/vbsvvh/preselection/"
+bkg_base_path: "~/ceph/vbsvvh/preselection/"
+
+sig_path: ["*r3*2fj_sig*/*/*.root"]
+bkg_path: ["*r3*2fj_bkg*/*/*.root"]
+
+training_features:
+  - lepton_pt: log
+  - lepton_eta: minmax
+  - lepton_phi: minmax
+  - lepton_mass: log
+  - met_pt: log
+  - met_phi: minmax
+  - boosted_h_candidate_pt: log
+  - boosted_h_candidate_eta: minmax
+  - boosted_h_candidate_phi: minmax
+  - boosted_h_candidate_mass: log
+  - boosted_h_candidate_tau21: none
+  - boosted_v_candidate_pt: log
+  - boosted_v_candidate_eta: minmax
+  - boosted_v_candidate_phi: minmax
+  - boosted_v_candidate_mass: log
+  - boosted_v_candidate_tau21: none
+  - vbs_jet1_pt: log
+  - vbs_jet1_eta: minmax
+  - vbs_jet1_phi: minmax
+  - vbs_jet1_mass: log
+  - vbs_jet2_pt: log
+  - vbs_jet2_eta: minmax
+  - vbs_jet2_phi: minmax
+  - vbs_jet2_mass: log
+  - vbs_detajj: minmax
+  - vbs_mjj: log
+
+derived_vars: {}
+auto_include_derived_vars: false
+auto_include_derived_vars_transform: none
+
+constraint_var: vbs_detajj
+
+extra_vars:
+  - weight
+  - boosted_h_candidate_score
+  - boosted_v_candidate_score
+  - shortname
+
+preselection: "(boosted_h_candidate_score >= 0.1) & (boosted_v_candidate_score >= 0.1)"
+
+learning_rate: 0.0001
+batch_size: 4096
+n_epochs: 1000
+
+architecture: [64, 32, 16]
+bce_weight: 1.0
+disco_lambda: 10.0
+
+closure_n_events_min: 10
+closure_symmetrize: true
+use_batchnorm: true
+dropout: 0.2
+weight_decay: 0.01
+label_smoothing: 0.0
+
+devices: [3]
+
+output: "2FJ_NEW_RUN3"

@@ -1,0 +1,82 @@
+input_base_path: "/ceph/cms/store/user/aaarora/vbsvvh/postprocessing/latest/"
+
+sig_path: ["*r2*3fj_sig*/*/*.parquet"]
+sig_infer_path: ["*r2*3fj_sig*/*1p5*/*.parquet"]
+bkg_path: ["*r2*3fj_bkg*/*/*.parquet"]
+data_path: ["*r2*3fj_data*/*/*.parquet"]
+
+training_features:
+  - met_pt: log
+  - met_phi: minmax
+  - boosted_h_candidate_pt: log
+  - boosted_h_candidate_eta: minmax
+  - boosted_h_candidate_phi: minmax
+  - boosted_h_candidate_msoftdrop: log
+  - boosted_h_candidate_tau21: none
+  - boosted_v1_candidate_pt: log
+  - boosted_v1_candidate_eta: minmax
+  - boosted_v1_candidate_phi: minmax
+  - boosted_v1_candidate_msoftdrop: log
+  - boosted_v1_candidate_tau21: none
+  - boosted_v2_candidate_pt: log
+  - boosted_v2_candidate_eta: minmax
+  - boosted_v2_candidate_phi: minmax
+  - boosted_v2_candidate_msoftdrop: log
+  - boosted_v2_candidate_tau21: none
+
+extra_vars:
+  - weight
+  - boosted_h_candidate_score
+  - boosted_v1_candidate_score
+  - boosted_v2_candidate_score
+  - shortname
+  - year
+
+constraint_var: "vbs_detajj"
+
+bdt_features:
+  - vbs_mjj
+  - vbs_detajj
+  - vbs_jet1_pt
+  - vbs_jet1_eta
+  - vbs_jet1_phi
+  - vbs_jet1_mass
+  - vbs_jet2_pt
+  - vbs_jet2_eta
+  - vbs_jet2_phi
+  - vbs_jet2_mass
+
+use_bdt_as_constraint: true
+
+bdt:
+  n_estimators: 1000
+  max_depth: 6
+  learning_rate: 0.03
+  min_child_weight: 20
+  subsample: 0.8
+  colsample_bytree: 0.7
+  gamma: 1.0
+  reg_lambda: 10.0
+  reg_alpha: 0.0
+  early_stopping_rounds: 40
+
+# preselection: "(boosted_h_candidate_score >= 0.1) & (boosted_v1_candidate_score >= 0.1) & (boosted_v2_candidate_score >= 0.1)"
+
+learning_rate: 0.0001
+batch_size: 4096
+n_epochs: 1000
+
+architecture: [128, 64, 32, 16]
+bce_weight: 1.0
+disco_lambda: 5.0
+
+closure_n_events_min: 10
+closure_symmetrize: true
+use_batchnorm: true
+dropout: 0.2
+weight_decay: 0.01
+label_smoothing: 0.0
+
+devices: [0]
+
+output: "output/0LEP_3FJ_RUN2"

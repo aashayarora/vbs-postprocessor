@@ -1,2 +1,5 @@
 *.log
 cutflows/
+
+__pycache__/
+CMSSW*

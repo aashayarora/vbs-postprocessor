@@ -1,0 +1,19 @@
+name: abcdisco
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.9
+  - pytorch-cuda=12.4
+  - pytorch-lightning
+  - tensorboard
+  - numpy
+  - pandas
+  - scikit-learn
+  - uproot
+  - awkward
+  - matplotlib
+  - tqdm
+  - pyyaml
