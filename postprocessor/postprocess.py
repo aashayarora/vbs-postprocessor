@@ -1,28 +1,14 @@
 #!/usr/bin/env python3
-"""Candidate post-processor for the VBS VVH analysis.
-
-Reads a preselection-output ntuple for one reconstructed channel (0lep_3FJ / 1lep_1FJ /
-1lep_2FJ), and for the nominal plus every JES/JER variation stored in the file, runs the
-boson-candidate + resolved + m_lb reconstruction (ported from the old 1lep-cutbased
-selections) using that variation's good-object collections and the preselection's stored
-VBS pair. Candidates for all variations are written to a single long-format parquet file
-with a ``variation`` column.
-
-Usage:
-    python postprocess.py --channel 1lep_2FJ \
-        --input /path/to/presel_1lep_2FJ.root [more.root ...] \
-        --output out/1lep_2FJ.parquet [--tree Events] [--threads 8] [--nominal-only]
-
-Requires: ROOT (PyROOT), awkward, numpy. Run inside the project pixi env, e.g.
-    CONDA_OVERRIDE_CUDA=12.0 pixi run --manifest-path env/pixi.toml python postprocess/postprocess.py ...
-"""
 from __future__ import annotations
 
 import argparse
 import glob
+import json
 import os
 import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import awkward as ak
@@ -35,9 +21,8 @@ from cutflow import Cutflow, parse_preselection_logs, write_combined_table  # no
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# Event-identifier / bookkeeping columns copied through when present (weights are added
-# separately by add_weight_columns). `shortname` lets downstream (plotter, abcd) split by
-# sample; `year` is handy for lumi.
+DEFAULT_PRESEL_DIR = str(Path(HERE).parent.parent / "cmstas-run3-vbsvvh" / "preselection")
+SIGNAL_POINT_RE = r"VBS[A-Z]+H(?:_[OS]S)?_c2v[0-9p]+_c3_[0-9p]+"
 PASSTHROUGH = ["run", "luminosityBlock", "event", "shortname", "year"]
 
 
@@ -58,7 +43,7 @@ def detect_variations(columns) -> list[str]:
             continue
         sfx = c[len("FatJet_pt_"):]
         needed = [f"FatJet_isGood_{sfx}", f"Jet_isGood_{sfx}",
-                  f"Jet_isGoodNoFJClean_{sfx}", f"Jet_pt_{sfx}", f"vbs_jet1_Jetidx_{sfx}"]
+                  f"Jet_pt_{sfx}", f"vbs_jet1_Jetidx_{sfx}"]
         if all(n in cols for n in needed):
             out.append(sfx)
     return out
@@ -97,21 +82,12 @@ def process_variation(input_files, tree, channel, sfx, passthrough, cutflow=None
 
 
 def mirror_output_path(input_file, output_dir):
-    """Parquet path mirroring the preselection layout <jobgroup>/<sample>/<chunk>.root
-    -> <output_dir>/<jobgroup>/<sample>/<chunk>.parquet. Preserving the <sample>/ dir
-    keeps each big sample's chunks together, so the abcd/plotter readers group them as
-    one sample (they derive the sample from the parent directory)."""
     p = Path(input_file)
     parts = [name for name in (p.parent.parent.name, p.parent.name) if name]
     return str(Path(output_dir, *parts, p.stem + ".parquet"))
 
 
 def process_to_parquet(input_files, output_path, tree, channel, nominal_only, want_cutflow=False):
-    """Reconstruct every variation from input_files and write one long-format parquet.
-
-    Returns the nominal post-processor cutflow as [(label, sum_w)] when want_cutflow, else
-    None. The checkpoints are booked on the nominal graph and filled by its event loop.
-    """
     all_cols = [str(c) for c in ROOT.RDataFrame(tree, input_files).GetColumnNames()]
     variations = [""] if nominal_only else detect_variations(all_cols)
     print(f"[postprocess] channel={channel}  files={len(input_files)}  -> {output_path}  "
@@ -127,7 +103,9 @@ def process_to_parquet(input_files, output_path, tree, channel, nominal_only, wa
 
     combined = ak.concatenate(pieces) if len(pieces) > 1 else pieces[0]
     os.makedirs(os.path.dirname(os.path.abspath(output_path)) or ".", exist_ok=True)
-    ak.to_parquet(combined, output_path)
+    part_path = output_path + ".part"
+    ak.to_parquet(combined, part_path)
+    os.replace(part_path, output_path)
     print(f"[postprocess] wrote {len(combined)} rows -> {output_path}")
     return cf.rows() if cf is not None else None
 
@@ -150,13 +128,23 @@ def main(argv=None):
     p.add_argument("--cutflow", help="write a combined preselection+post-processor cutflow "
                    "table (this channel) to this .txt path")
     p.add_argument("--cutflow-logs", default=None,
-                   help="preselection condor jobs dir with the .stdout logs "
-                        "(default: <repo>/preselection/condor/jobs)")
+                   help="preselection condor jobs dir with the .stdout logs (default: "
+                        "$VBSVVH_PRESEL_DIR/condor/jobs, else the sibling checkout at "
+                        f"{DEFAULT_PRESEL_DIR}). Only jobs submitted with the "
+                        "preselection's --cutflow flag print a cutflow table; without it "
+                        "only the post-processor stage is written.")
     p.add_argument("--cutflow-split", default=None,
                    help="regex matched against each input path to split the cutflow into one "
-                        "table per group (e.g. 'C2V_[^_/]+_C3_[^_/]+' for per-signal-point "
+                        f"table per group (e.g. '{SIGNAL_POINT_RE}' for per-signal-point "
                         "cutflows). The matched text (group 1 if present) is the group key and "
                         "is appended to the --cutflow filename. Mirror mode only.")
+    p.add_argument("--files-per-process", type=int, default=50,
+                   help="mirror mode: process the inputs in batches of this many files, each in a "
+                        "fresh child process, retrying a batch that crashes (default: 50; 0 = all "
+                        "in this process). A long single process eventually segfaults inside "
+                        "awkward's from_rdataframe (a cppyy std::string it caches as a template "
+                        "argument gets freed), so bound the number of files per process.")
+    p.add_argument("--cutflow-rows-out", help=argparse.SUPPRESS)  # child mode: stream rows here
     args = p.parse_args(argv)
 
     if args.threads > 1:
@@ -167,7 +155,7 @@ def main(argv=None):
     if not input_files:
         p.error(f"no input files matched: {args.input}")
 
-    want_cf = bool(args.cutflow)
+    want_cf = bool(args.cutflow) or bool(args.cutflow_rows_out)
     split_re = re.compile(args.cutflow_split) if args.cutflow_split else None
     if split_re is not None and args.output:
         p.error("--cutflow-split requires --output-dir (per-file processing), not --output")
@@ -181,17 +169,24 @@ def main(argv=None):
             return "other"
         return m.group(1) if m.groups() else m.group(0)
 
-    def _accumulate(group, rows):
+    counted = set()  # input files whose rows are in cf_acc (skipped files contribute none)
+
+    def _accumulate(group, rows, f=None):
+        if f is not None:
+            counted.add(f)
         d = cf_acc.setdefault(group, {})
         for label, sum_w in (rows or []):
             d[label] = d.get(label, 0.0) + sum_w
 
+    failed = []
     if args.output:
-        # Single-output mode: read every input file as one frame -> one parquet.
         _accumulate("all", process_to_parquet(input_files, args.output, args.tree, args.channel,
                                               args.nominal_only, want_cf))
+        counted.update(input_files)
+    elif 0 < args.files_per_process < len(input_files):
+        failed = _run_batches(args, input_files, want_cf,
+                              lambda f, rows: _accumulate(_group_key(f), rows, f))
     else:
-        # Mirror mode: one parquet per input chunk, under the mirrored <jobgroup>/<sample>/ tree.
         print(f"[postprocess] mirror mode: {len(input_files)} input file(s) -> {args.output_dir}")
         for i, f in enumerate(input_files, 1):
             out_path = mirror_output_path(f, args.output_dir)
@@ -199,20 +194,77 @@ def main(argv=None):
                 print(f"[{i}/{len(input_files)}] skip existing {out_path}")
                 continue
             print(f"[{i}/{len(input_files)}] {f}")
-            _accumulate(_group_key(f), process_to_parquet([f], out_path, args.tree, args.channel,
-                                                          args.nominal_only, want_cf))
+            rows = process_to_parquet([f], out_path, args.tree, args.channel,
+                                      args.nominal_only, want_cf)
+            _accumulate(_group_key(f), rows, f)
+            if args.cutflow_rows_out:
+                with open(args.cutflow_rows_out, "a") as fh:
+                    fh.write(json.dumps({"file": f, "rows": rows}) + "\n")
 
-    if want_cf:
-        _emit_cutflow(args, input_files, cf_acc)
+    if args.cutflow:
+        _emit_cutflow(args, input_files, cf_acc, n_uncounted=len(set(input_files) - counted))
+
+    if failed:
+        print(f"[postprocess] ERROR: {len(failed)} input file(s) produced no output:")
+        for f in failed:
+            print(f"    {f}")
+        return 1
+    return 0
 
 
-def _emit_cutflow(args, input_files, cf_acc):
-    """Aggregate the preselection cutflow from the condor logs of the processed job-group(s)
-    and append the accumulated post-processor cutflow, writing one combined table per group
-    (one overall table when --cutflow-split is not used)."""
+MAX_BATCH_ATTEMPTS = 3
+
+
+def _run_batches(args, input_files, want_cf, on_rows):
+    n = args.files_per_process
+    batches = [input_files[i:i + n] for i in range(0, len(input_files), n)]
+    print(f"[postprocess] mirror mode: {len(input_files)} input file(s) -> {args.output_dir}  "
+          f"in {len(batches)} batch(es) of <= {n} file(s), one process each", flush=True)
+
+    def _child(files, rows_file, skip_existing):
+        cmd = [sys.executable, os.path.abspath(__file__), "--channel", args.channel,
+               "--tree", args.tree, "--threads", str(args.threads),
+               "--output-dir", args.output_dir, "--files-per-process", "0", "--input", *files]
+        if args.nominal_only:
+            cmd.append("--nominal-only")
+        if skip_existing:
+            cmd.append("--skip-existing")
+        if want_cf:
+            cmd += ["--cutflow-rows-out", rows_file]
+        return subprocess.run(cmd).returncode
+
+    def _missing(files):
+        return [f for f in files if not os.path.exists(mirror_output_path(f, args.output_dir))]
+
+    failed = []
+    with tempfile.TemporaryDirectory(prefix="postprocess_rows_") as tmp:
+        for b, batch in enumerate(batches, 1):
+            rows_file = os.path.join(tmp, f"batch{b}.jsonl")
+            for attempt in range(MAX_BATCH_ATTEMPTS):
+                print(f"[postprocess] batch {b}/{len(batches)}: {len(batch)} file(s)"
+                      + (f"  (attempt {attempt + 1})" if attempt else ""), flush=True)
+                rc = _child(batch, rows_file, args.skip_existing or attempt > 0)
+                if rc == 0:
+                    break
+                print(f"[postprocess] WARNING: batch {b} exited with code {rc}; "
+                      f"{len(_missing(batch))} file(s) of it still without output", flush=True)
+            else:
+                for f in _missing(batch):
+                    print(f"[postprocess] retrying on its own: {f}", flush=True)
+                    _child([f], rows_file, True)
+            if want_cf and os.path.exists(rows_file):
+                with open(rows_file) as fh:
+                    for line in fh:
+                        rec = json.loads(line)
+                        on_rows(rec["file"], rec["rows"])
+            failed += _missing(batch)
+    return failed
+
+
+def _emit_cutflow(args, input_files, cf_acc, n_uncounted=0):
     jobgroups = sorted({Path(f).parent.parent.name for f in input_files})
     logs_dir = Path(args.cutflow_logs) if args.cutflow_logs else \
-        Path(__file__).resolve().parent.parent / "preselection" / "condor" / "jobs"
+        Path(os.environ.get("VBSVVH_PRESEL_DIR", DEFAULT_PRESEL_DIR)) / "condor" / "jobs"
     all_logs = [str(p) for jg in jobgroups for p in (logs_dir / jg).rglob("*.stdout")]
     out = Path(args.cutflow)
 
@@ -227,9 +279,15 @@ def _emit_cutflow(args, input_files, cf_acc):
                   f"group '{group}'; writing the post-processor stage only")
         grp = "" if group == "all" else f"  group={group}"
         title = f"Cutflow  channel={args.channel}{grp}  jobgroup(s)={', '.join(jobgroups)}"
+        if n_uncounted:
+            # --skip-existing (or a failed file) leaves inputs out of the post-processor rows;
+            # say so rather than write a table that silently undercounts.
+            title += (f"\nINCOMPLETE: {n_uncounted} of {len(input_files)} input file(s) not counted "
+                      f"(skipped as already processed, or failed); rerun without --skip-existing "
+                      f"for full post-processor yields")
         write_combined_table(presel_rows, list(rows_dict.items()), str(out_path), title, n_logs)
         print(f"[cutflow] wrote combined cutflow -> {out_path}")
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

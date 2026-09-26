@@ -11,7 +11,8 @@ from scipy.stats import gamma
 # The systematics definition lives with the code that writes the predictions, so
 # the branch list and nuisance naming cannot drift between the two.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "abcd"))
-from systematics import SYST_WEIGHTS, jec_nuisance_name, nuisance_name, ratio_columns
+from systematics import (SYST_WEIGHTS, jec_nuisance_name, nuisance_name,
+                         preferred_branches, ratio_columns)
 
 
 def get_poisson_uncertainty(n):
@@ -40,13 +41,17 @@ def get_data_yields_from_df(df, cuts):
     return len(df_cut)
 
 def available_systematics(df):
-    """The systematic branches whose up/down ratio columns are present in ``df``."""
+    """The systematic branches whose up/down ratio columns are present in ``df``.
+
+    Filtered through ``preferred_branches`` so a variation written both plainly and as a
+    _withbSF companion contributes its nuisance once (see systematics.py).
+    """
     present = []
     for branch in SYST_WEIGHTS:
         up_col, dn_col = ratio_columns(branch)
         if up_col in df.columns and dn_col in df.columns:
             present.append(branch)
-    return present
+    return preferred_branches(present)
 
 
 LEPTON_TAGS = {"0lep": "ZeroLep", "1lep": "OneLep", "2lep": "TwoLep"}
