@@ -12,6 +12,8 @@ import tempfile
 from pathlib import Path
 
 import awkward as ak
+import numpy as np
+import pyarrow
 import ROOT
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -49,18 +51,9 @@ def detect_variations(columns) -> list[str]:
     return out
 
 
-def process_variation(input_files, tree, channel, sfx, passthrough, cutflow=None):
-    """Reconstruct one variation; return an awkward record array with a variation field.
-
-    ``cutflow`` (only passed for the nominal variation) books weighted checkpoints at the
-    channel gate and each reconstruction cut, filled when the event loop runs below."""
-    df = ROOT.RDataFrame(tree, input_files)
+def book_variation(df, channel, sfx, passthrough, cutflow=None):
     df = build_collections(df, sfx)
 
-    # Select this variation's event set with the preselection's own per-variation channel
-    # flag (the file is the OR of all variations). This is authoritative — never recompute
-    # the jet-count gate from a counter. Fall back to the recomputed gate only if the flag
-    # column is absent (input predating the flags).
     flag = f"passes_{channel}_{'nom' if not sfx else sfx}"
     if flag in set(str(c) for c in df.GetColumnNames()):
         df = df.Filter(f"{flag} == 1", f"channel gate ({flag})")
@@ -75,10 +68,27 @@ def process_variation(input_files, tree, channel, sfx, passthrough, cutflow=None
 
     present = set(str(c) for c in df.GetColumnNames())
     out_cols = [c for c in passthrough if c in present] + weight_cols + cand_cols
-    arr = ak.from_rdataframe(df, columns=tuple(out_cols))
-    label = sfx if sfx else "nominal"
-    arr = ak.with_field(arr, ak.Array([label] * len(arr)), "variation")
-    return arr
+    return df.AsNumpy(out_cols, lazy=True), out_cols, df
+
+
+_RVEC_RE = re.compile(r"ROOT::VecOps::RVec<(.+)>")
+_CPP_DTYPES = {"float": "float32", "double": "float64", "int": "int32", "unsigned int": "uint32",
+               "bool": "bool", "Long64_t": "int64", "ULong64_t": "uint64"}
+
+
+def _to_awkward(values, cpp_type):
+    if values.dtype != object:
+        return ak.from_numpy(values)
+    if cpp_type in ("string", "std::string"):
+        return ak.from_numpy(values.astype(str))
+    m = _RVEC_RE.fullmatch(cpp_type)
+    if not m or m.group(1) not in _CPP_DTYPES:
+        raise TypeError(f"unsupported AsNumpy column type {cpp_type}")
+    dtype = np.dtype(_CPP_DTYPES[m.group(1)])
+    counts = np.fromiter(map(len, values), np.int64, len(values))
+    content = (np.concatenate([np.asarray(v, dtype=dtype) for v in values]) if len(values)
+               else np.empty(0, dtype))
+    return ak.unflatten(content, counts)
 
 
 def mirror_output_path(input_file, output_dir):
@@ -87,27 +97,109 @@ def mirror_output_path(input_file, output_dir):
     return str(Path(output_dir, *parts, p.stem + ".parquet"))
 
 
-def process_to_parquet(input_files, output_path, tree, channel, nominal_only, want_cutflow=False):
-    all_cols = [str(c) for c in ROOT.RDataFrame(tree, input_files).GetColumnNames()]
+def process_file(input_files, tree, channel, nominal_only, want_cutflow=False):
+    """Reconstruct every variation of ``input_files`` in one event loop; return the combined
+    awkward record array (with a ``variation`` field) and the cutflow rows (or None)."""
+    df = ROOT.RDataFrame(tree, input_files)
+    all_cols = [str(c) for c in df.GetColumnNames()]
     variations = [""] if nominal_only else detect_variations(all_cols)
-    print(f"[postprocess] channel={channel}  files={len(input_files)}  -> {output_path}  "
+    print(f"[postprocess] channel={channel}  files={len(input_files)}  "
           f"variations={[v or 'nominal' for v in variations]}")
 
     cf = Cutflow() if want_cutflow else None
+    booked = [(sfx, *book_variation(df, channel, sfx, PASSTHROUGH, cf if sfx == "" else None))
+              for sfx in variations]
     pieces = []
-    for sfx in variations:
-        arr = process_variation(input_files, tree, channel, sfx, PASSTHROUGH,
-                                cutflow=(cf if sfx == "" else None))
-        print(f"  - {sfx or 'nominal':<24} {len(arr):>10} events")
+    for sfx, result, cols, node in booked:
+        data = result.GetValue()  # the first GetValue runs the loop for every variation
+        arr = ak.zip({c: _to_awkward(data[c], node.GetColumnType(c) if data[c].dtype == object
+                                     else None) for c in cols}, depth_limit=1)
+        label = sfx if sfx else "nominal"
+        arr = ak.with_field(arr, ak.Array([label] * len(arr)), "variation")
+        print(f"  - {label:<24} {len(arr):>10} events")
         pieces.append(arr)
 
     combined = ak.concatenate(pieces) if len(pieces) > 1 else pieces[0]
+    return combined, (cf.rows() if cf is not None else None)
+
+
+# awkward's default parquet codec; the LCG views' pyarrow is built without it.
+PARQUET_CODEC = "zstd" if pyarrow.Codec.is_available("zstd") else "snappy"
+
+
+def write_parquet(arr, output_path):
     os.makedirs(os.path.dirname(os.path.abspath(output_path)) or ".", exist_ok=True)
     part_path = output_path + ".part"
-    ak.to_parquet(combined, part_path)
+    ak.to_parquet(arr, part_path, compression=PARQUET_CODEC)
     os.replace(part_path, output_path)
-    print(f"[postprocess] wrote {len(combined)} rows -> {output_path}")
-    return cf.rows() if cf is not None else None
+    print(f"[postprocess] wrote {len(arr)} rows -> {output_path}")
+
+
+def process_to_parquet(input_files, output_path, tree, channel, nominal_only, want_cutflow=False):
+    arr, rows = process_file(input_files, tree, channel, nominal_only, want_cutflow)
+    write_parquet(arr, output_path)
+    return rows
+
+
+def _dask_task(path, tree, channel, nominal_only, want_cutflow, helpers_src):
+    """One input file on a Dask worker. Declaring the helpers again in a warm worker is a
+    no-op (helpers.h has an include guard)."""
+    if not ROOT.gInterpreter.Declare(helpers_src):
+        raise RuntimeError("failed to declare postprocess/helpers.h into cling")
+    return process_file([path], tree, channel, nominal_only, want_cutflow)
+
+
+def _run_dask(args, input_files, want_cf, on_rows):
+    import cloudpickle
+    from dask.distributed import Client, as_completed
+    import channels
+    import cutflow
+    import objects
+    for mod in (channels, cutflow, objects):
+        cloudpickle.register_pickle_by_value(mod)
+    with open(os.path.join(HERE, "helpers.h")) as fh:
+        helpers_src = fh.read()
+
+    todo = [(f, mirror_output_path(f, args.output_dir)) for f in input_files]
+    if args.skip_existing:
+        todo = [(f, out) for f, out in todo if not os.path.exists(out)]
+    # Largest files first, so the longest tasks do not end up in the tail.
+    todo.sort(key=lambda t: os.path.getsize(t[0]) if os.path.exists(t[0]) else 0, reverse=True)
+    print(f"[postprocess] dask mode: {len(todo)} of {len(input_files)} input file(s) -> "
+          f"{args.output_dir}  via {args.scheduler}", flush=True)
+
+    client = Client(args.scheduler)
+    futures = {client.submit(_dask_task, f, args.tree, args.channel, args.nominal_only, want_cf,
+                             helpers_src, pure=False, retries=args.retries): (f, out)
+               for f, out in todo}
+    cluster_failed = []
+    for i, fut in enumerate(as_completed(futures), 1):
+        f, out = futures.pop(fut)
+        try:
+            arr, rows = fut.result()
+        except Exception as exc:
+            print(f"[{i}/{len(todo)}] cluster failure {f}: {type(exc).__name__}: {exc}", flush=True)
+            cluster_failed.append(f)
+            continue
+        write_parquet(arr, out)
+        on_rows(f, rows)
+        print(f"[{i}/{len(todo)}] {f}", flush=True)
+    client.close()
+
+    # Outliers the workers cannot hold (the 2.9 GB r2 1lep_1FJ WJets HT-2500 file is killed at
+    # the worker memory limit) run here instead, where memory is plentiful.
+    failed = []
+    for f in cluster_failed:
+        print(f"[postprocess] running {f} locally after it failed on the cluster", flush=True)
+        try:
+            rows = process_to_parquet([f], mirror_output_path(f, args.output_dir), args.tree,
+                                      args.channel, args.nominal_only, want_cf)
+        except Exception as exc:
+            print(f"[postprocess] FAILED {f}: {type(exc).__name__}: {exc}", flush=True)
+            failed.append(f)
+            continue
+        on_rows(f, rows)
+    return failed
 
 
 def main(argv=None):
@@ -144,6 +236,13 @@ def main(argv=None):
                         "in this process). A long single process eventually segfaults inside "
                         "awkward's from_rdataframe (a cppyy std::string it caches as a template "
                         "argument gets freed), so bound the number of files per process.")
+    p.add_argument("--scheduler", default=None,
+                   help="mirror mode: run each input file as a task on this Dask scheduler "
+                        "(the address dask_cluster.py writes) instead of locally. The driver must "
+                        "run in the same LCG view as the workers; --threads and "
+                        "--files-per-process do not apply.")
+    p.add_argument("--retries", type=int, default=2,
+                   help="dask mode: rerun a file whose task raised up to this many times (default: 2)")
     p.add_argument("--cutflow-rows-out", help=argparse.SUPPRESS)  # child mode: stream rows here
     args = p.parse_args(argv)
 
@@ -159,6 +258,8 @@ def main(argv=None):
     split_re = re.compile(args.cutflow_split) if args.cutflow_split else None
     if split_re is not None and args.output:
         p.error("--cutflow-split requires --output-dir (per-file processing), not --output")
+    if args.scheduler and args.output:
+        p.error("--scheduler requires --output-dir (per-file processing), not --output")
     cf_acc = {}  # group key -> {cut label -> summed Sum(w)} (insertion-ordered)
 
     def _group_key(path):
@@ -183,6 +284,9 @@ def main(argv=None):
         _accumulate("all", process_to_parquet(input_files, args.output, args.tree, args.channel,
                                               args.nominal_only, want_cf))
         counted.update(input_files)
+    elif args.scheduler:
+        failed = _run_dask(args, input_files, want_cf,
+                           lambda f, rows: _accumulate(_group_key(f), rows, f))
     elif 0 < args.files_per_process < len(input_files):
         failed = _run_batches(args, input_files, want_cf,
                               lambda f, rows: _accumulate(_group_key(f), rows, f))
@@ -269,8 +373,6 @@ def _emit_cutflow(args, input_files, cf_acc, n_uncounted=0):
     out = Path(args.cutflow)
 
     for group, rows_dict in sorted(cf_acc.items()):
-        # Preselection logs for this group: the whole job-group unless splitting, in which case
-        # keep only logs whose path carries the group key (the sample dir names match).
         logs = all_logs if group == "all" else [lf for lf in all_logs if group in lf]
         out_path = out if group == "all" else out.with_name(f"{out.stem}_{group}{out.suffix}")
         presel_rows, n_logs = parse_preselection_logs(logs)
@@ -280,8 +382,6 @@ def _emit_cutflow(args, input_files, cf_acc, n_uncounted=0):
         grp = "" if group == "all" else f"  group={group}"
         title = f"Cutflow  channel={args.channel}{grp}  jobgroup(s)={', '.join(jobgroups)}"
         if n_uncounted:
-            # --skip-existing (or a failed file) leaves inputs out of the post-processor rows;
-            # say so rather than write a table that silently undercounts.
             title += (f"\nINCOMPLETE: {n_uncounted} of {len(input_files)} input file(s) not counted "
                       f"(skipped as already processed, or failed); rerun without --skip-existing "
                       f"for full post-processor yields")

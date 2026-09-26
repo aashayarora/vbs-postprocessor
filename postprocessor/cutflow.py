@@ -1,15 +1,3 @@
-"""Combined cutflow across the two analysis stages.
-
-The event selection is now split: the preselection (C++/condor) does everything up to the
-channel jet-selection, printing a weighted cutflow table to each job's ``.stdout``; the
-post-processor then applies the boson-candidate / resolved / VBS assignment cuts. This
-module aggregates the preselection cutflow from the condor logs and appends the
-post-processor's own cuts, writing one combined table per channel to a text file.
-
-Preselection weighting (see ``preselection/src/main.cpp``): ``Sum(weight)`` for MC,
-``Count`` for data. The post-processor mirrors it: ``Sum(weight)`` when a ``weight`` column
-is present, else event counts.
-"""
 from __future__ import annotations
 
 import gzip
@@ -17,19 +5,10 @@ import re
 from collections import OrderedDict
 
 
-# Matches the tabulate rows the preselection prints:
-# | # | Cut name | Sum(w) | +/- stat | rel. eff. | abs. eff. |
 _ROW = re.compile(r'\|\s+(\d+)\s+\|\s+(.+?)\s+\|\s+([\d.]+)\s+\|\s+([\d.]+)\s+\|\s+([\d.]+)\s+\|\s+([\d.]+)\s+\|')
 
 
 class Cutflow:
-    """Books a lazy weighted yield (or count) at each named checkpoint on an RDF graph.
-
-    Call :meth:`add` after each cut while building the graph; read :meth:`rows` after the
-    event loop has run (e.g. after ``ak.from_rdataframe`` triggers it — the checkpoints
-    share the loop manager, so they are filled in the same pass).
-    """
-
     def __init__(self, weight_col="weight"):
         self.weight_col = weight_col
         self._entries = []  # (label, RResultPtr)
@@ -54,11 +33,6 @@ def _read_text(path):
 
 
 def parse_preselection_logs(log_files):
-    """Aggregate the preselection cutflow (summing Sum(w) per cut) across job stdout files.
-
-    Returns ``[(cut_name, sum_w), ...]`` ordered by the preselection's cut number, and the
-    number of log files that actually contained a cutflow table.
-    """
     agg = {}  # cut_num -> [name, sum_w]
     n_used = 0
     for path in log_files:
@@ -77,11 +51,6 @@ def parse_preselection_logs(log_files):
 
 
 def write_combined_table(presel_rows, postproc_rows, out_path, title, n_logs):
-    """Write a single combined cutflow table (preselection stage + post-processor stage).
-
-    rel. eff. is versus the previous row; abs. eff. is versus the first row. A divider marks
-    the hand-off between the two stages.
-    """
     rows = ([("preselection", name, sw) for name, sw in presel_rows]
             + [("postprocess", name, sw) for name, sw in postproc_rows])
     lines = []
