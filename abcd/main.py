@@ -28,6 +28,7 @@ from pytorch_lightning.loggers import TensorBoardLogger
 
 from dataloader import get_dataloader
 from model import ABCDLightningModule
+from root_io import load_data as load_parquet_data
 
 from torch.utils.tensorboard import SummaryWriter
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
@@ -228,6 +229,10 @@ def _safe_minmax_scale(values, valid_mask):
 
 
 def load_data(paths, features, extra_vars, num_workers=1):
+    # Candidate post-processor output is parquet: read it with root_io (nominal variation only).
+    if paths and all(str(p).endswith(".parquet") for p in paths):
+        return load_parquet_data(paths, features, extra_vars, num_workers=num_workers)
+
     branches = list(dict.fromkeys(features + extra_vars))
 
     sample_names = []

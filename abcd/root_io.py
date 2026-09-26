@@ -5,11 +5,26 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
+import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 from tqdm import tqdm
 
-from common import apply_mask, concat_chunks, data_length, evaluate_expression
+from common import MISSING_VALUE, apply_mask, concat_chunks, data_length, evaluate_expression
 from systematics import SYST_WEIGHTS, ratio_columns
+
+
+def _to_flat_numpy(column):
+    """Arrow column -> flat numpy array. List columns (lepton_pt, ...) keep their first
+    element, MISSING_VALUE when empty, like the ROOT reader; left as object arrays of
+    per-event arrays they cost gigabytes and break the float-only downstream code."""
+    if not (pa.types.is_list(column.type) or pa.types.is_large_list(column.type)):
+        return column.to_numpy(zero_copy_only=False)
+    lengths = pc.fill_null(pc.list_value_length(column), 0).to_numpy(zero_copy_only=False)
+    firsts = pc.list_flatten(pc.list_slice(column, 0, 1)).to_numpy(zero_copy_only=False)
+    out = np.full(len(lengths), MISSING_VALUE, dtype=np.float64)
+    out[lengths > 0] = firsts
+    return out
 
 
 def _read_parquet_frame(path, branches, dataset_idx, sample_idx, variation="nominal"):
@@ -41,7 +56,7 @@ def _read_parquet_frame(path, branches, dataset_idx, sample_idx, variation="nomi
     read_cols = list(dict.fromkeys(read_cols))
 
     table = pq.read_table(path, columns=read_cols)
-    columns = {name: table[name].to_numpy(zero_copy_only=False) for name in table.column_names}
+    columns = {name: _to_flat_numpy(table[name]) for name in table.column_names}
 
     # variation=None keeps every variation (the column is carried through for the
     # datacards to split on); a string keeps only that variation's event set.
