@@ -1,9 +1,9 @@
 input_base_path: "/ceph/cms/store/user/aaarora/vbsvvh/postprocessing/latest/"
 
-sig_path: ["*r3*3fj_sig*/*/*.parquet"]
-sig_infer_path: ["*r3*3fj_sig*/*1p5*/*.parquet"]
-bkg_path: ["*r3*3fj_bkg*/*/*.parquet"]
-data_path: ["*r3*3fj_data*/*/*.parquet"]
+sig_path: ["merged_0lep_3FJ_r3_*/VBS*_c2v*/*.parquet"]
+sig_infer_path: ["merged_0lep_3FJ_r3_*/VBS*_c2v*1p5*/*.parquet"]
+bkg_path: ["merged_0lep_3FJ_r3_*/*_NANOAODSIM*/*.parquet"]
+data_path: ["merged_0lep_3FJ_r3_*/*_NANOAOD/*.parquet"]
 
 training_features:
   - met_pt: log
