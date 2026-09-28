@@ -1,0 +1,2252 @@
+{
+  "r2_1lep_1fj": {
+    "year": "Run2",
+    "logy": true,
+    "default_scale": 10000.0,
+    "signal_files": [
+      "merged_1lep_1FJ_r2_*_1lep_1FJ/VBS*_c2v1p5_c3_1p0_*/*.parquet",
+      "merged_1lep_1FJ_r2_*_1lep_1FJ/VBS*_c2v1p0_c3_10p0_*/*.parquet",
+      "merged_1lep_1FJ_r2_*_1lep_1FJ/VBS*_c2v1p0_c3_1p0_*/*.parquet"
+    ],
+    "background_files": [
+      "merged_1lep_1FJ_r2_*_1lep_1FJ/*_NANOAODSIM/*.parquet"
+    ],
+    "data_files": [
+      "merged_1lep_1FJ_r2_*_1lep_1FJ/*_NANOAOD/*.parquet"
+    ],
+    "background_labels": {
+      "TT": "$t\\bar{t}$",
+      "WJets": "W+jets",
+      "QCD": "QCD",
+      "ST": "Single t",
+      "DY": "Drell-Yan"
+    },
+    "signal_labels": [
+      "$\\kappa_{2V}$ = 1.5",
+      "$\\kappa_\\lambda$ = 10.0",
+      "SM"
+    ],
+    "hists": [
+      [
+        "muon_pt",
+        "Muon $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "muon_eta",
+        "Muon $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "muon_phi",
+        "Muon $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "electron_pt",
+        "Electron $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "electron_eta",
+        "Electron $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "electron_phi",
+        "Electron $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet1_pt",
+        "VBS Jet 1 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet1_eta",
+        "VBS Jet 1 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet1_phi",
+        "VBS Jet 1 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet2_pt",
+        "VBS Jet 2 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet2_eta",
+        "VBS Jet 2 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet2_phi",
+        "VBS Jet 2 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_mjj",
+        "VBS $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          3000
+        ]
+      ],
+      [
+        "vbs_detajj",
+        "VBS $\\Delta\\eta_{jj}$",
+        [
+          50,
+          0,
+          10
+        ]
+      ],
+      [
+        "vbs_score",
+        "VBS score",
+        [
+          25,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_score",
+        "Boosted Higgs candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_pt",
+        "Boosted Higgs candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_h_candidate_eta",
+        "Boosted Higgs candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_phi",
+        "Boosted Higgs candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_msoftdrop",
+        "Boosted Higgs candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_h_candidate_part_mass",
+        "Boosted Higgs candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_score",
+        "Boosted V candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_pt",
+        "Boosted V candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v_candidate_eta",
+        "Boosted V candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_phi",
+        "Boosted V candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_msoftdrop",
+        "Boosted V candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_part_mass",
+        "Boosted V candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "resolved_mjj_1",
+        "Resolved V candidate $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          200
+        ]
+      ],
+      [
+        "resolved_ptjj_1",
+        "Resolved V candidate $p_{\\mathrm{T},jj}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "resolved_dR_1",
+        "Resolved V candidate $\\Delta R_{jj}$",
+        [
+          50,
+          0,
+          2
+        ]
+      ],
+      [
+        "njet",
+        "Number of jets",
+        [
+          11,
+          0,
+          10
+        ]
+      ],
+      [
+        "met_pt",
+        "$p_{\\mathrm{T}}^{\\mathrm{miss}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_phi",
+        "$\\phi(p_{\\mathrm{T}}^{\\mathrm{miss}})$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_tau21",
+        "Boosted Higgs candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_tau21",
+        "Boosted V candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "mlb_min",
+        "$m_{\\ell b}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ]
+    ],
+    "mva": {
+      "base_path": "/home/users/aaarora/phys/run3/vbs-postprocess/abcd/output/1LEP_1FJ_RUN2/single/",
+      "hists": [
+        [
+          "dnn_score",
+          "DNN score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "dnn_score < 0.8"
+          }
+        ],
+        [
+          "bdt_score",
+          "BDT score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "bdt_score < 0.8"
+          }
+        ],
+        [
+          "resolved_mjj_1_residue_h",
+          "Resolved pair 1 $|m_{jj}-m_{\\mathrm{H}}|$ [GeV]",
+          [
+            50,
+            0,
+            200
+          ]
+        ],
+        [
+          "resolved_mjj_1_residue_w",
+          "Resolved pair 1 $|m_{jj}-m_{\\mathrm{W}}|$ [GeV]",
+          [
+            50,
+            0,
+            200
+          ]
+        ],
+        [
+          "resolved_mjj_1_residue_z",
+          "Resolved pair 1 $|m_{jj}-m_{\\mathrm{Z}}|$ [GeV]",
+          [
+            50,
+            0,
+            200
+          ]
+        ]
+      ]
+    }
+  },
+  "r2_1lep_2fj": {
+    "year": "Run2",
+    "logy": true,
+    "default_scale": 1000.0,
+    "signal_files": [
+      "merged_1lep_2FJ_r2_*_1lep_2FJ/VBS*_c2v1p5_c3_1p0_*/*.parquet",
+      "merged_1lep_2FJ_r2_*_1lep_2FJ/VBS*_c2v1p0_c3_10p0_*/*.parquet",
+      "merged_1lep_2FJ_r2_*_1lep_2FJ/VBS*_c2v1p0_c3_1p0_*/*.parquet"
+    ],
+    "background_files": [
+      "merged_1lep_2FJ_r2_*_1lep_2FJ/*_NANOAODSIM/*.parquet"
+    ],
+    "data_files": [
+      "merged_1lep_2FJ_r2_*_1lep_2FJ/*_NANOAOD/*.parquet"
+    ],
+    "background_labels": {
+      "TT": "$t\\bar{t}$",
+      "WJets": "W+jets",
+      "QCD": "QCD",
+      "ST": "Single t",
+      "DY": "Drell-Yan"
+    },
+    "signal_labels": [
+      "$\\kappa_{2V}$ = 1.5",
+      "$\\kappa_\\lambda$ = 10.0",
+      "SM"
+    ],
+    "hists": [
+      [
+        "muon_pt",
+        "Muon $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "muon_eta",
+        "Muon $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "muon_phi",
+        "Muon $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "electron_pt",
+        "Electron $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "electron_eta",
+        "Electron $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "electron_phi",
+        "Electron $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet1_pt",
+        "VBS Jet 1 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet1_eta",
+        "VBS Jet 1 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet1_phi",
+        "VBS Jet 1 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet2_pt",
+        "VBS Jet 2 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet2_eta",
+        "VBS Jet 2 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet2_phi",
+        "VBS Jet 2 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_mjj",
+        "VBS $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          5000
+        ]
+      ],
+      [
+        "vbs_detajj",
+        "VBS $\\Delta\\eta_{jj}$",
+        [
+          50,
+          0,
+          10
+        ]
+      ],
+      [
+        "vbs_score",
+        "VBS score",
+        [
+          25,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_score",
+        "Boosted Higgs candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_pt",
+        "Boosted Higgs candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_h_candidate_eta",
+        "Boosted Higgs candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_phi",
+        "Boosted Higgs candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_msoftdrop",
+        "Boosted Higgs candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_h_candidate_part_mass",
+        "Boosted Higgs candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_score",
+        "Boosted V candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_pt",
+        "Boosted V candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v_candidate_eta",
+        "Boosted V candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_phi",
+        "Boosted V candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_msoftdrop",
+        "Boosted V candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_part_mass",
+        "Boosted V candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "mlb_min",
+        "$m_{\\ell b}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ],
+        10000.0
+      ],
+      [
+        "met_pt",
+        "$p_{\\mathrm{T}}^{\\mathrm{miss}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_phi",
+        "$\\phi(p_{\\mathrm{T}}^{\\mathrm{miss}})$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_tau21",
+        "Boosted Higgs candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_tau21",
+        "Boosted V candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ]
+    ],
+    "mva": {
+      "base_path": "/home/users/aaarora/phys/run3/vbs-postprocess/abcd/output/1LEP_2FJ_RUN2/single/",
+      "hists": [
+        [
+          "dnn_score",
+          "DNN score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "dnn_score < 0.8"
+          }
+        ],
+        [
+          "bdt_score",
+          "BDT score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "bdt_score < 0.8"
+          }
+        ]
+      ]
+    }
+  },
+  "r2_0lep_3fj": {
+    "year": "Run2",
+    "logy": true,
+    "default_scale": 1000.0,
+    "signal_files": [
+      "merged_0lep_3FJ_r2_*_0lep_3FJ/VBS*_c2v1p5_c3_1p0_*/*.parquet",
+      "merged_0lep_3FJ_r2_*_0lep_3FJ/VBS*_c2v1p0_c3_10p0_*/*.parquet",
+      "merged_0lep_3FJ_r2_*_0lep_3FJ/VBS*_c2v1p0_c3_1p0_*/*.parquet"
+    ],
+    "background_files": [
+      "merged_0lep_3FJ_r2_*_0lep_3FJ/*_NANOAODSIM/*.parquet"
+    ],
+    "data_files": [
+      "merged_0lep_3FJ_r2_*_0lep_3FJ/*_NANOAOD/*.parquet"
+    ],
+    "background_labels": {
+      "QCD": "QCD",
+      "TTTo": "$t\\bar{t}$",
+      "Wto": "W+jets",
+      "DY": "Drell-Yan"
+    },
+    "signal_labels": [
+      "$\\kappa_{2V}$ = 1.5",
+      "$\\kappa_\\lambda$ = 10.0",
+      "SM"
+    ],
+    "hists": [
+      [
+        "vbs_jet1_pt",
+        "VBS Jet 1 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet1_eta",
+        "VBS Jet 1 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet1_phi",
+        "VBS Jet 1 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet2_pt",
+        "VBS Jet 2 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet2_eta",
+        "VBS Jet 2 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet2_phi",
+        "VBS Jet 2 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_mjj",
+        "VBS $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          5000
+        ]
+      ],
+      [
+        "vbs_detajj",
+        "VBS $\\Delta\\eta_{jj}$",
+        [
+          50,
+          0,
+          10
+        ]
+      ],
+      [
+        "vbs_score",
+        "VBS score",
+        [
+          25,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_score",
+        "Boosted Higgs candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_pt",
+        "Boosted Higgs candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_h_candidate_eta",
+        "Boosted Higgs candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_phi",
+        "Boosted Higgs candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_msoftdrop",
+        "Boosted Higgs candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_h_candidate_part_mass",
+        "Boosted Higgs candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v1_candidate_score",
+        "Boosted V1 candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v1_candidate_pt",
+        "Boosted V1 candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v1_candidate_eta",
+        "Boosted V1 candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v1_candidate_phi",
+        "Boosted V1 candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v1_candidate_msoftdrop",
+        "Boosted V1 candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v1_candidate_part_mass",
+        "Boosted V1 candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v2_candidate_score",
+        "Boosted V2 candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v2_candidate_pt",
+        "Boosted V2 candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v2_candidate_eta",
+        "Boosted V2 candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v2_candidate_phi",
+        "Boosted V2 candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v2_candidate_msoftdrop",
+        "Boosted V2 candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v2_candidate_part_mass",
+        "Boosted V2 candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_pt",
+        "$p_{\\mathrm{T}}^{\\mathrm{miss}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_phi",
+        "$\\phi(p_{\\mathrm{T}}^{\\mathrm{miss}})$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_tau21",
+        "Boosted Higgs candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v1_candidate_tau21",
+        "Boosted V1 candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v2_candidate_tau21",
+        "Boosted V2 candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ]
+    ],
+    "mva": {
+      "base_path": "/home/users/aaarora/phys/run3/vbs-postprocess/abcd/output/0LEP_3FJ_RUN2/single/",
+      "hists": [
+        [
+          "dnn_score",
+          "DNN score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "dnn_score < 0.8"
+          }
+        ],
+        [
+          "bdt_score",
+          "BDT score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "bdt_score < 0.8"
+          }
+        ]
+      ]
+    }
+  },
+  "r3_1lep_1fj": {
+    "year": "Run3",
+    "logy": true,
+    "default_scale": 10000.0,
+    "signal_files": [
+      "merged_1lep_1FJ_r3_*_1lep_1FJ/VBS*_c2v1p5_c3_1p0_*/*.parquet",
+      "merged_1lep_1FJ_r3_*_1lep_1FJ/VBS*_c2v1p0_c3_10p0_*/*.parquet",
+      "merged_1lep_1FJ_r3_*_1lep_1FJ/VBS*_c2v1p0_c3_1p0_*/*.parquet"
+    ],
+    "background_files": [
+      "merged_1lep_1FJ_r3_*_1lep_1FJ/*_NANOAODSIM/*.parquet"
+    ],
+    "data_files": [
+      "merged_1lep_1FJ_r3_*_1lep_1FJ/*_NANOAOD/*.parquet"
+    ],
+    "background_labels": {
+      "TTto": "$t\\bar{t}$",
+      "Wto": "W+jets",
+      "QCD": "QCD",
+      "DY": "Drell-Yan"
+    },
+    "signal_labels": [
+      "$\\kappa_{2V}$ = 1.5",
+      "$\\kappa_\\lambda$ = 10.0",
+      "SM"
+    ],
+    "hists": [
+      [
+        "muon_pt",
+        "Muon $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "muon_eta",
+        "Muon $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "muon_phi",
+        "Muon $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "electron_pt",
+        "Electron $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "electron_eta",
+        "Electron $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "electron_phi",
+        "Electron $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet1_pt",
+        "VBS Jet 1 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet1_eta",
+        "VBS Jet 1 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet1_phi",
+        "VBS Jet 1 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet2_pt",
+        "VBS Jet 2 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet2_eta",
+        "VBS Jet 2 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet2_phi",
+        "VBS Jet 2 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_mjj",
+        "VBS $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          3000
+        ]
+      ],
+      [
+        "vbs_detajj",
+        "VBS $\\Delta\\eta_{jj}$",
+        [
+          50,
+          0,
+          10
+        ]
+      ],
+      [
+        "vbs_score",
+        "VBS score",
+        [
+          25,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_score",
+        "Boosted Higgs candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_pt",
+        "Boosted Higgs candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_h_candidate_eta",
+        "Boosted Higgs candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_phi",
+        "Boosted Higgs candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_msoftdrop",
+        "Boosted Higgs candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_h_candidate_part_mass",
+        "Boosted Higgs candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_score",
+        "Boosted V candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_pt",
+        "Boosted V candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v_candidate_eta",
+        "Boosted V candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_phi",
+        "Boosted V candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_msoftdrop",
+        "Boosted V candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_part_mass",
+        "Boosted V candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "resolved_mjj_1",
+        "Resolved V candidate $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          200
+        ]
+      ],
+      [
+        "resolved_ptjj_1",
+        "Resolved V candidate $p_{\\mathrm{T},jj}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "resolved_dR_1",
+        "Resolved V candidate $\\Delta R_{jj}$",
+        [
+          50,
+          0,
+          2
+        ]
+      ],
+      [
+        "njet",
+        "Number of jets",
+        [
+          11,
+          0,
+          10
+        ]
+      ],
+      [
+        "met_pt",
+        "$p_{\\mathrm{T}}^{\\mathrm{miss}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_phi",
+        "$\\phi(p_{\\mathrm{T}}^{\\mathrm{miss}})$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_tau21",
+        "Boosted Higgs candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_tau21",
+        "Boosted V candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "mlb_min",
+        "$m_{\\ell b}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ]
+    ],
+    "mva": {
+      "base_path": "/home/users/aaarora/phys/run3/vbs-postprocess/abcd/output/1LEP_1FJ_RUN3/single/",
+      "hists": [
+        [
+          "dnn_score",
+          "DNN score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "dnn_score < 0.8"
+          }
+        ],
+        [
+          "bdt_score",
+          "BDT score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "bdt_score < 0.8"
+          }
+        ],
+        [
+          "resolved_mjj_1_residue_h",
+          "Resolved pair 1 $|m_{jj}-m_{\\mathrm{H}}|$ [GeV]",
+          [
+            50,
+            0,
+            200
+          ]
+        ],
+        [
+          "resolved_mjj_1_residue_w",
+          "Resolved pair 1 $|m_{jj}-m_{\\mathrm{W}}|$ [GeV]",
+          [
+            50,
+            0,
+            200
+          ]
+        ],
+        [
+          "resolved_mjj_1_residue_z",
+          "Resolved pair 1 $|m_{jj}-m_{\\mathrm{Z}}|$ [GeV]",
+          [
+            50,
+            0,
+            200
+          ]
+        ]
+      ]
+    }
+  },
+  "r3_1lep_2fj": {
+    "year": "Run3",
+    "logy": true,
+    "default_scale": 1000.0,
+    "signal_files": [
+      "merged_1lep_2FJ_r3_*_1lep_2FJ/VBS*_c2v1p5_c3_1p0_*/*.parquet",
+      "merged_1lep_2FJ_r3_*_1lep_2FJ/VBS*_c2v1p0_c3_10p0_*/*.parquet",
+      "merged_1lep_2FJ_r3_*_1lep_2FJ/VBS*_c2v1p0_c3_1p0_*/*.parquet"
+    ],
+    "background_files": [
+      "merged_1lep_2FJ_r3_*_1lep_2FJ/*_NANOAODSIM/*.parquet"
+    ],
+    "data_files": [
+      "merged_1lep_2FJ_r3_*_1lep_2FJ/*_NANOAOD/*.parquet"
+    ],
+    "background_labels": {
+      "TTto": "$t\\bar{t}$",
+      "Wto": "W+jets",
+      "QCD": "QCD",
+      "DY": "Drell-Yan"
+    },
+    "signal_labels": [
+      "$\\kappa_{2V}$ = 1.5",
+      "$\\kappa_\\lambda$ = 10.0",
+      "SM"
+    ],
+    "hists": [
+      [
+        "muon_pt",
+        "Muon $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "muon_eta",
+        "Muon $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "muon_phi",
+        "Muon $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "electron_pt",
+        "Electron $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "electron_eta",
+        "Electron $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "electron_phi",
+        "Electron $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet1_pt",
+        "VBS Jet 1 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet1_eta",
+        "VBS Jet 1 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet1_phi",
+        "VBS Jet 1 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet2_pt",
+        "VBS Jet 2 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet2_eta",
+        "VBS Jet 2 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet2_phi",
+        "VBS Jet 2 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_mjj",
+        "VBS $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          5000
+        ]
+      ],
+      [
+        "vbs_detajj",
+        "VBS $\\Delta\\eta_{jj}$",
+        [
+          50,
+          0,
+          10
+        ]
+      ],
+      [
+        "vbs_score",
+        "VBS score",
+        [
+          25,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_score",
+        "Boosted Higgs candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_pt",
+        "Boosted Higgs candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_h_candidate_eta",
+        "Boosted Higgs candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_phi",
+        "Boosted Higgs candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_mass",
+        "Boosted Higgs candidate $m$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_h_candidate_msoftdrop",
+        "Boosted Higgs candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_h_candidate_part_mass",
+        "Boosted Higgs candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_score",
+        "Boosted V candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_pt",
+        "Boosted V candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v_candidate_eta",
+        "Boosted V candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_phi",
+        "Boosted V candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v_candidate_mass",
+        "Boosted V candidate $m$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_msoftdrop",
+        "Boosted V candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v_candidate_part_mass",
+        "Boosted V candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_pt",
+        "$p_{\\mathrm{T}}^{\\mathrm{miss}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_phi",
+        "$\\phi(p_{\\mathrm{T}}^{\\mathrm{miss}})$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_tau21",
+        "Boosted Higgs candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v_candidate_tau21",
+        "Boosted V candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "mlb_min",
+        "$m_{\\ell b}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ]
+    ],
+    "mva": {
+      "base_path": "/home/users/aaarora/phys/run3/vbs-postprocess/abcd/output/1LEP_2FJ_RUN3/single/",
+      "hists": [
+        [
+          "dnn_score",
+          "DNN score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "dnn_score < 0.8"
+          }
+        ],
+        [
+          "bdt_score",
+          "BDT score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "bdt_score < 0.8"
+          }
+        ]
+      ]
+    }
+  },
+  "r3_0lep_3fj": {
+    "year": "Run3",
+    "logy": true,
+    "default_scale": 1000.0,
+    "signal_files": [
+      "merged_0lep_3FJ_r3_*_0lep_3FJ/VBS*_c2v1p5_c3_1p0_*/*.parquet",
+      "merged_0lep_3FJ_r3_*_0lep_3FJ/VBS*_c2v1p0_c3_10p0_*/*.parquet",
+      "merged_0lep_3FJ_r3_*_0lep_3FJ/VBS*_c2v1p0_c3_1p0_*/*.parquet"
+    ],
+    "background_files": [
+      "merged_0lep_3FJ_r3_*_0lep_3FJ/*_NANOAODSIM/*.parquet"
+    ],
+    "data_files": [
+      "merged_0lep_3FJ_r3_*_0lep_3FJ/*_NANOAOD/*.parquet"
+    ],
+    "background_labels": {
+      "QCD": "QCD",
+      "TTto": "$t\\bar{t}$",
+      "Wto": "W+jets",
+      "DY": "Drell-Yan"
+    },
+    "signal_labels": [
+      "$\\kappa_{2V}$ = 1.5",
+      "$\\kappa_\\lambda$ = 10.0",
+      "SM"
+    ],
+    "hists": [
+      [
+        "fatjet_globalParT3_Xbb",
+        "FatJet $X_{bb}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "fatjet_globalParT3_Xqq",
+        "FatJet $X_{qq}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "fatjet_globalParT3_QCD",
+        "FatJet $QCD$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "vbs_jet1_pt",
+        "VBS Jet 1 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet1_eta",
+        "VBS Jet 1 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet1_phi",
+        "VBS Jet 1 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_jet2_pt",
+        "VBS Jet 2 $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "vbs_jet2_eta",
+        "VBS Jet 2 $\\eta$",
+        [
+          50,
+          -5.0,
+          5.0
+        ]
+      ],
+      [
+        "vbs_jet2_phi",
+        "VBS Jet 2 $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "vbs_mjj",
+        "VBS $m_{jj}$ [GeV]",
+        [
+          50,
+          0,
+          5000
+        ]
+      ],
+      [
+        "vbs_detajj",
+        "VBS $\\Delta\\eta_{jj}$",
+        [
+          50,
+          0,
+          10
+        ]
+      ],
+      [
+        "vbs_score",
+        "VBS score",
+        [
+          25,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_score",
+        "Boosted Higgs candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_h_candidate_pt",
+        "Boosted Higgs candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_h_candidate_eta",
+        "Boosted Higgs candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_phi",
+        "Boosted Higgs candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_msoftdrop",
+        "Boosted Higgs candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_h_candidate_part_mass",
+        "Boosted Higgs candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v1_candidate_score",
+        "Boosted V1 candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v1_candidate_pt",
+        "Boosted V1 candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v1_candidate_eta",
+        "Boosted V1 candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v1_candidate_phi",
+        "Boosted V1 candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v1_candidate_msoftdrop",
+        "Boosted V1 candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v1_candidate_part_mass",
+        "Boosted V1 candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v2_candidate_score",
+        "Boosted V2 candidate score",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v2_candidate_pt",
+        "Boosted V2 candidate $p_{\\mathrm{T}}$ [GeV]",
+        [
+          50,
+          250,
+          750
+        ]
+      ],
+      [
+        "boosted_v2_candidate_eta",
+        "Boosted V2 candidate $\\eta$",
+        [
+          50,
+          -2.5,
+          2.5
+        ]
+      ],
+      [
+        "boosted_v2_candidate_phi",
+        "Boosted V2 candidate $\\phi$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_v2_candidate_msoftdrop",
+        "Boosted V2 candidate $m_{\\mathrm{SD}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "boosted_v2_candidate_part_mass",
+        "Boosted V2 candidate $m_{\\mathrm{ParT}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_pt",
+        "$p_{\\mathrm{T}}^{\\mathrm{miss}}$ [GeV]",
+        [
+          50,
+          0,
+          500
+        ]
+      ],
+      [
+        "met_phi",
+        "$\\phi(p_{\\mathrm{T}}^{\\mathrm{miss}})$",
+        [
+          50,
+          -3.5,
+          3.5
+        ]
+      ],
+      [
+        "boosted_h_candidate_tau21",
+        "Boosted Higgs candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v1_candidate_tau21",
+        "Boosted V1 candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ],
+      [
+        "boosted_v2_candidate_tau21",
+        "Boosted V2 candidate $\\tau_{21}$",
+        [
+          50,
+          0,
+          1
+        ]
+      ]
+    ],
+    "mva": {
+      "base_path": "/home/users/aaarora/phys/run3/vbs-postprocess/abcd/output/0LEP_3FJ_RUN3/single/",
+      "hists": [
+        [
+          "dnn_score",
+          "DNN score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "dnn_score < 0.8"
+          }
+        ],
+        [
+          "bdt_score",
+          "BDT score",
+          [
+            50,
+            0,
+            1
+          ],
+          {
+            "data_cut": "bdt_score < 0.8"
+          }
+        ]
+      ]
+    }
+  }
+}
