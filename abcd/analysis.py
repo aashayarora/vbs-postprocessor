@@ -1,5 +1,11 @@
+import os
+
+import matplotlib.colors
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+
+import style
 
 def to_threshold_bin_idx(vals, thresholds):
     """
@@ -26,10 +32,19 @@ def optimize_cuts(df_sig, df_bkg,
                   disco1_col="dnn_0_score", disco2_col="dnn_1_score",
                   cut_var1_list=None, cut_var2_list=None, cut_var3_list=None,
                   cut_disco1_list=None, cut_disco2_list=None,
-                  combine_method="and"):
+                  combine_method="and",
+                  df_data=None, use_data_driven_bkg=False, min_data_yield=0.0):
     """
     Optimizes 5D cuts to maximize significance.
+
+    The background is the MC in ``df_bkg``. ``df_data`` / ``min_data_yield`` belong to
+    the data-driven mode (background = B*C/D from the data control regions), which
+    run_analysis.py exposes as --data-driven but which is not implemented here yet.
     """
+    if use_data_driven_bkg:
+        raise NotImplementedError(
+            "optimize_cuts: the data-driven background (B*C/D from data) is not implemented; "
+            "run without --data-driven to optimize against the MC background")
     if cut_var1_list is None:
         cut_var1_list = np.linspace(0, 1, 21)
     if cut_var2_list is None:
@@ -137,18 +152,22 @@ def optimize_cuts(df_sig, df_bkg,
 
     return best_significance, best_tuple
 
-def get_ABCD_regions(df, cut_var1, cut_var2, cut_disco1, cut_disco2, 
-                     var1_col="boosted_h_candidate_score", var2_col="boosted_v_candidate_score", 
+def get_ABCD_regions(df, cut_var1, cut_var2, cut_disco1, cut_disco2,
+                     var1_col="boosted_h_candidate_score", var2_col="boosted_v_candidate_score",
                      disco1_col="dnn_0_score", disco2_col="dnn_1_score",
-                     combine_method="and"):
+                     combine_method="and", var3_col=None, cut_var3=None):
     """
-    Computes ABCD region yields given the optimized cut thresholds.
+    Computes ABCD region yields given the optimized cut thresholds. A third tagger
+    (``var3_col``, e.g. the second V candidate in 3fj) is combined like the other two.
     """
     # Apply initial kinematic cuts if applicable
+    passes = [df[var1_col] >= cut_var1, df[var2_col] >= cut_var2]
+    if var3_col is not None:
+        passes.append(df[var3_col] >= cut_var3)
     if combine_method == "and":
-        df_filtered = df[(df[var1_col] >= cut_var1) & (df[var2_col] >= cut_var2)]
+        df_filtered = df[np.logical_and.reduce(passes)]
     elif combine_method == "or":
-        df_filtered = df[(df[var1_col] >= cut_var1) | (df[var2_col] >= cut_var2)]
+        df_filtered = df[np.logical_or.reduce(passes)]
     else:
         raise ValueError("combine_method must be 'and' or 'or'")
     
@@ -158,3 +177,68 @@ def get_ABCD_regions(df, cut_var1, cut_var2, cut_disco1, cut_disco2,
     D = df_filtered[(df_filtered[disco1_col] < cut_disco1) & (df_filtered[disco2_col] < cut_disco2)].weight.sum()
     
     return A, B, C, D
+
+
+def _weighted_stat(values, weights, statistic):
+    """Weighted median or mean of ``values`` (NaN when empty)."""
+    if len(values) == 0 or np.sum(weights) <= 0:
+        return np.nan
+    if statistic == "mean":
+        return np.average(values, weights=weights)
+    order = np.argsort(values)
+    cumulative = np.cumsum(weights[order])
+    return values[order][np.searchsorted(cumulative, 0.5 * cumulative[-1])]
+
+
+def plot_background_decorrelation(df_bkg_kin, cut_dnn, cut_bdt, out_dir, scan_idx,
+                                  disco1_col="dnn_score", disco2_col="bdt_score",
+                                  df_data_kin=None, use_data_driven=False,
+                                  profile_name="background_dnn_vs_vbs_median_profile"):
+    """Background in one scan's ABCD plane, and the profile of disco2 in bins of disco1
+    (flat when the two are decorrelated). In data-driven mode both are drawn from data
+    with region A (above both cuts) removed, so the signal region stays blind.
+    ``profile_name`` names the profile plot and sets its statistic (median unless it
+    contains "mean")."""
+    use_data = use_data_driven and df_data_kin is not None
+    df = df_data_kin if use_data else df_bkg_kin
+    x = df[disco1_col].to_numpy()
+    y = df[disco2_col].to_numpy()
+    w = np.ones(len(df)) if use_data else df["weight"].to_numpy()
+    if use_data:
+        blind = (x > cut_dnn) & (y > cut_bdt)
+        x, y, w = x[~blind], y[~blind], w[~blind]
+    label = "Data, A blind" if use_data else "Background MC"
+    scan = f"scan_{scan_idx + 1}"
+
+    fig, ax = plt.subplots(figsize=style.FIG_PLANE)
+    counts, xedges, yedges = np.histogram2d(x, y, bins=100, weights=w)
+    mesh = ax.pcolormesh(xedges, yedges, np.ma.masked_where(counts <= 0, counts).T,
+                         cmap="Blues", norm=matplotlib.colors.LogNorm(), rasterized=True)
+    style.colorbar(fig, mesh, ax, label="Events")
+    ax.axvline(cut_dnn, color=style.DATA_COLOR, linestyle="--", linewidth=2)
+    ax.axhline(cut_bdt, color=style.DATA_COLOR, linestyle="--", linewidth=2)
+    ax.set_xlabel(style.axis_label(disco1_col))
+    ax.set_ylabel(style.axis_label(disco2_col))
+    style.annotate(ax, [label, style.CONTEXT.extra, f"Scan {scan_idx + 1}"])
+    style.cms_header(ax, data=use_data)
+    style.save(fig, os.path.join(out_dir, f"{'data' if use_data else 'background'}_abcd_regions_{scan}"))
+
+    statistic = "mean" if "mean" in profile_name else "median"
+    edges = np.linspace(np.min(x), np.max(x), 21) if len(x) else np.linspace(0.0, 1.0, 21)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    bin_idx = np.clip(np.digitize(x, edges) - 1, 0, len(centers) - 1)
+    profile = np.array([_weighted_stat(y[bin_idx == i], w[bin_idx == i], statistic)
+                        for i in range(len(centers))])
+
+    fig, ax = plt.subplots(figsize=style.FIG_SINGLE)
+    ax.plot(centers, profile, marker="o", linewidth=2, color=style.BACKGROUND_COLOR,
+            label=f"{statistic.capitalize()} {style.axis_label(disco2_col)}")
+    ax.axvline(cut_dnn, color=style.DATA_COLOR, linestyle="--", linewidth=2)
+    ax.axhline(cut_bdt, color=style.DATA_COLOR, linestyle=":", linewidth=2)
+    ax.set_xlabel(style.axis_label(disco1_col))
+    ax.set_ylabel(f"{statistic.capitalize()} {style.axis_label(disco2_col)}")
+    style.headroom(ax, factor=1.4)
+    style.annotate(ax, [label, style.CONTEXT.extra, f"Scan {scan_idx + 1}"])
+    style.legend(ax, loc="upper right")
+    style.cms_header(ax, data=use_data)
+    style.save(fig, os.path.join(out_dir, f"{profile_name}_{scan}"))

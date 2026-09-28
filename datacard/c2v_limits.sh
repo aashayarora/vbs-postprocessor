@@ -7,7 +7,7 @@
 # since Run 2 does not have samples at every C2V point.
 #
 # Expects the per-point predictions produced by scoring each signal sample
-# through the trained model (abcd/main.py --infer --no-plots).
+# through the trained model (abcd/run_abcd.py --infer).
 #
 # Usage (source cmsenv first):
 #   ./c2v_limits.sh <predictions-dir> [output-dir]

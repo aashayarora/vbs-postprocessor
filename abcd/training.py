@@ -17,7 +17,9 @@ from dataloader import get_dataloader
 from plots import save_tensorboard_plots
 
 
-def make_dataloaders(data, training_features, constraint_var, batch_size):
+def train_val_indices(data):
+    """The stratified 80/20 train/val split. It depends only on ``label``, the sample index
+    and the event order, so the raw (unpreprocessed) data gives the same split."""
     labels_str = np.asarray(data["label"]).astype(np.int32).astype(str)
     stratify_col = "sample_idx" if "sample_idx" in data else "dataset_idx"
     sample_str = np.asarray(data[stratify_col]).astype(np.int64).astype(str)
@@ -36,12 +38,16 @@ def make_dataloaders(data, training_features, constraint_var, batch_size):
 
     all_indices = np.arange(data_length(data))
 
-    train_idx, val_idx = train_test_split(
+    return train_test_split(
         all_indices,
         test_size=0.2,
         random_state=42,
         stratify=stratify_key,
     )
+
+
+def make_dataloaders(data, training_features, constraint_var, batch_size):
+    train_idx, val_idx = train_val_indices(data)
 
     feature_matrix = np.column_stack([data[f] for f in training_features]).astype(np.float32, copy=False)
     constraint_values = np.asarray(data[constraint_var], dtype=np.float32).reshape(-1, 1)

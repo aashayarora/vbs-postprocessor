@@ -31,6 +31,39 @@ mkdir -p ${CUTFLOW_DIR}
 # (the cutflow tables of a resumed run cover only the newly processed files, and say so).
 EXTRA_ARGS=("$@")
 
+# Only run these groups (space-separated log tags, e.g. ONLY="r2_1lep_1fj_bkg r3_0lep_3fj_sig").
+ONLY=${ONLY:-}
+
+# Where the files are processed:
+#   EXECUTOR=condor (default)  one Dask scheduler (dask_cluster.py) with JOBS HTCondor worker
+#                              jobs (4 workers each) serves every group below. Everything runs in the LCG
+#                              view the workers use, since dask needs the same versions on both
+#                              ends. Run the script itself under nohup: it stops the cluster when
+#                              it exits.
+#   EXECUTOR=local             every group on this machine, --threads each, in the current env.
+EXECUTOR=${EXECUTOR:-condor}
+JOBS=${JOBS:-1000}
+LCG_VIEW=/cvmfs/sft.cern.ch/lcg/views/LCG_110/x86_64-el9-gcc14-opt/setup.sh
+EXECUTOR_ARGS=()
+if [ "$EXECUTOR" = condor ]; then
+    set +u  # the LCG setup script reads unset variables
+    source "$LCG_VIEW"
+    set -u
+    SCHED_FILE=$(pwd)/dask-scheduler.txt
+    rm -f "$SCHED_FILE"
+    nohup python3 dask_cluster.py --address-file "$SCHED_FILE" --jobs "$JOBS" \
+        >>dask_cluster.log 2>&1 &
+    CLUSTER_PID=$!
+    trap 'kill $CLUSTER_PID 2>/dev/null; wait $CLUSTER_PID 2>/dev/null' EXIT
+    for _ in $(seq 60); do [ -s "$SCHED_FILE" ] && break; sleep 2; done
+    if [ ! -s "$SCHED_FILE" ]; then
+        echo "[run.sh] dask_cluster.py did not come up, see dask_cluster.log" >&2
+        exit 1
+    fi
+    EXECUTOR_ARGS=(--scheduler "$(cat "$SCHED_FILE")")
+    echo "[run.sh] dask scheduler ${EXECUTOR_ARGS[1]}"
+fi
+
 # Per-signal-point cutflow split, matching the current signal sample naming
 # (VBSWWH_OS_c2v1p0_c3_10p0_UL18). Keep in sync with SIGNAL_POINT_RE in postprocess.py.
 SIGNAL_POINT_RE='VBS[A-Z]+H(?:_[OS]S)?_c2v[0-9p]+_c3_[0-9p]+'
@@ -70,9 +103,12 @@ resolve_group() {
 submit() {
     local channel=$1 run=$2 kind=$3 threads=$4; shift 4
     local dir tag
-    dir=$(resolve_group "$channel" "$run" "$kind") || return 1
     # Log / cutflow basename in the old r3_1lep_2fj_sig style, from the channel name.
     tag="${run}_$(echo "$channel" | tr '[:upper:]' '[:lower:]')_${kind}"
+    if [ -n "$ONLY" ] && [[ " $ONLY " != *" $tag "* ]]; then
+        return 0
+    fi
+    dir=$(resolve_group "$channel" "$run" "$kind") || return 1
     echo "[run.sh] ${tag}  <-  $(basename "$dir")"
     nohup python3 postprocess.py \
         --channel "$channel" \
@@ -80,8 +116,11 @@ submit() {
         --input "$dir"/*/output_*.root \
         --output-dir "${OUTPUT_DIR}" \
         --cutflow "${CUTFLOW_DIR}/${tag}.txt" \
+        ${EXECUTOR_ARGS[@]+"${EXECUTOR_ARGS[@]}"} \
         "$@" ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} >>"${tag}.log" 2>&1 &
+    DRIVER_PIDS+=($!)
 }
+DRIVER_PIDS=()
 
 # # sig
 submit 1lep_2FJ r2 sig 16 --cutflow-split "${SIGNAL_POINT_RE}"
@@ -115,4 +154,5 @@ submit 1lep_1FJ r3 bkg 32
 submit 0lep_3FJ r2 bkg 32
 submit 0lep_3FJ r3 bkg 32
 
-wait
+# Only the drivers: a bare wait would also wait on the dask cluster forever.
+wait "${DRIVER_PIDS[@]}"

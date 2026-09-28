@@ -173,8 +173,8 @@ def train_bdt(sig_data, bkg_data, features, cfg, output_dir):
 
     model.save_model(str(paths["model"]))
     paths["features"].write_text(json.dumps(list(features), indent=2), encoding="utf-8")
+    logging.info("Saved BDT model to %s", paths["model"])
     save_bdt_tmva(model, features, paths["tmva"])
-    logging.info("Saved BDT model to %s and TMVA weights to %s", paths["model"], paths["tmva"])
 
     _plot_bdt_roc(y_val, val_scores, w_val, paths["roc"])
     _plot_bdt_score_density(y_val, val_scores, w_val, paths["score"])
@@ -214,9 +214,14 @@ def save_bdt_tmva(model, features, output_path):
     """Save the BDT as a ROOT ``TMVA::Experimental::RBDT`` object.
 
     ROOT is imported lazily so that training/inference paths that do not touch it
-    do not pay the import cost (and so a missing ROOT install only breaks here).
+    do not pay the import cost. Without ROOT (the pixi training env is PyPI-only)
+    the export is skipped: inference reloads bdt_model.json, not this file.
     """
-    from ROOT.TMVA.Experimental import SaveXGBoost
+    try:
+        from ROOT.TMVA.Experimental import SaveXGBoost
+    except ImportError:
+        logging.warning("ROOT not available: skipping the TMVA export to %s", output_path)
+        return
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -224,6 +229,7 @@ def save_bdt_tmva(model, features, output_path):
         output_path.unlink()
 
     SaveXGBoost(model, "bdt", str(output_path), len(features))
+    logging.info("Saved TMVA weights to %s", output_path)
 
 
 def _plot_bdt_roc(labels, scores, weights, output_path):

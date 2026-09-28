@@ -81,6 +81,16 @@ def reconstruct_1lep_1FJ(df, cutflow=None):
     The channel event set (nfatjet==1 && njet>=4) is applied upstream via the
     preselection's passes_1lep_1FJ_<sfx> flag, which guarantees exactly one good fat
     jet for this variation, so fatjet_*[0] below is safe."""
+    # The 1lep-cutbased lepton selection. The preselection's 1lep_1FJ filter drops its
+    # nElectron_Veto terms (1lep_2FJ keeps them), which lets a veto electron ride along with
+    # the muon and even become lepton_pt[0].
+    df = df.Filter(
+        "(nMuon_Loose == 1 && nMuon_Tight == 1 && nElectron_Veto == 0 && nElectron_Loose == 0 && nElectron_Tight == 0) || "
+        "(nMuon_Loose == 0 && nMuon_Tight == 0 && nElectron_Veto == 1 && nElectron_Loose == 1 && nElectron_Tight == 1)",
+        "1-lepton selection (electron veto)")
+    if cutflow is not None:
+        cutflow.add(df, "1-lepton selection (electron veto)")
+
     df = (
         df.Define("fatjet_is_h", "fatjet_Hbb[0] > fatjet_Wqq[0]")
           .Define("fatjet_is_v", "!fatjet_is_h")

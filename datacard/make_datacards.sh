@@ -10,7 +10,7 @@
 #               overwritten. Combine them from there:
 #                   cd unblind && ../combine_cards.sh all
 
-BASE=/home/users/aaarora/phys/run3/cmstas-run3-vbsvvh/abcd/output/
+BASE=/home/users/aaarora/phys/run3/vbs-postprocess/abcd/output/
 
 OUTDIR=.
 UNBLIND=()
@@ -63,3 +63,5 @@ run_datacard 1LEP_1FJ_RUN3 $OUTDIR/1lep_1fj_r3/datacard_scan 1lep_1fj_r3 --combi
 run_datacard 1LEP_1FJ_RUN2 $OUTDIR/1lep_1fj_r2/datacard_scan 1lep_1fj_r2 --combination or "${UNBLIND[@]}" &
 run_datacard 0LEP_3FJ_RUN3 $OUTDIR/0lep_3fj_r3/datacard_scan 0lep_3fj_r3 "${UNBLIND[@]}" &
 run_datacard 0LEP_3FJ_RUN2 $OUTDIR/0lep_3fj_r2/datacard_scan 0lep_3fj_r2 "${UNBLIND[@]}" &
+
+wait

@@ -38,18 +38,21 @@ def apply_mask(data, mask):
 
 
 def concat_chunks(chunks):
-    """Concatenate a list of column dicts, unioning their keys."""
+    """Concatenate a list of column dicts, unioning their keys.
+
+    A column missing from a chunk is NaN-padded there, as in concat_sig_bkg, so every
+    column keeps the combined length: the per-year systematic weights (e.g.
+    btag_*_2024Prompt vs btag_*_2025) differ between the files of one sample kind.
+    """
     if not chunks:
         return {}
 
-    all_keys = set()
-    for chunk in chunks:
-        all_keys.update(chunk.keys())
-
+    all_keys = list(dict.fromkeys(key for chunk in chunks for key in chunk))
     combined = {}
     for key in all_keys:
-        arrays = [np.asarray(chunk[key]) for chunk in chunks if key in chunk]
-        combined[key] = np.concatenate(arrays) if arrays else np.array([])
+        arrays = [np.asarray(chunk[key]) if key in chunk else np.full(data_length(chunk), np.nan)
+                  for chunk in chunks]
+        combined[key] = np.concatenate(arrays)
     return combined
 
 
