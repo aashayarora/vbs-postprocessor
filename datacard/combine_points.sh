@@ -29,6 +29,13 @@ for pt in sm c2v1p5 c3_10; do
         args=()
         for f in "$dir"datacard_scan_Scan*.dat; do
             k=$(basename "$f" .dat); k=${k#datacard_scan_Scan}
+            # A scan with no data in D has no ABCD prediction (A = B*C/D is NaN in combine and
+            # poisons the whole merged likelihood), e.g. a scan that picked dnn_cut 0.0.
+            nD=$(awk '/^bin /&&!b{for(i=2;i<=NF;i++)if($i=="D")c=i;b=1} /^observation/{print $c; exit}' "$f")
+            if [[ $nD == 0 ]]; then
+                echo "WARNING: skipping $pt/$region Scan$k: no data in region D" >&2
+                continue
+            fi
             args+=("${stem}${run}s${k}=$f")
         done
         card=$OUT/dc_${stem}_${run}_${SUFFIX[$pt]}.txt

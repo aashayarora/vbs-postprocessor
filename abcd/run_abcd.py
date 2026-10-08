@@ -32,16 +32,17 @@ from inference import prepare_inference_data, run_inference
 from model import ABCDLightningModule
 from preprocessing import apply_derived_vars, normalize_class_weights, preprocess_data
 from root_io import apply_preselection, load_data
+from systematics import PDF_WEIGHTS
 from training import collect_run_artifacts, make_dataloaders, run_training, train_val_indices
 
 
-def load_kind(run_cfg, kind, for_inference=False, paths=None):
+def load_kind(run_cfg, kind, for_inference=False, paths=None, extra_vars=()):
     """Read one sample kind ('sig', 'bkg', 'data') and apply the preselection; ``paths``
-    overrides the config's files for that kind."""
+    overrides the config's files for that kind, ``extra_vars`` adds branches to read."""
     if paths is None:
         paths = run_cfg.sample_paths(kind, for_inference=for_inference)
     logging.info("Loading %s: %d file(s)", kind, len(paths))
-    data = load_data(paths, run_cfg.load_features, run_cfg.extra_vars_for(kind),
+    data = load_data(paths, run_cfg.load_features, run_cfg.extra_vars_for(kind) + list(extra_vars),
                      num_workers=run_cfg.io_workers)
     return apply_preselection(data, run_cfg.preselection, kind)
 
@@ -191,7 +192,8 @@ def main():
         missing = [f for f in paths if not Path(f).exists()]
         if missing:
             p.error(f"--signal matched no files for: {missing}")
-        data = concat_sig_bkg(load_kind(run_cfg, "sig", paths=paths), {})
+        # Signal alone (the per-point cards), so the 100 PDF member columns stay cheap.
+        data = concat_sig_bkg(load_kind(run_cfg, "sig", paths=paths, extra_vars=[PDF_WEIGHTS]), {})
     else:
         data = concat_sig_bkg(load_kind(run_cfg, "sig", for_inference=True),
                               load_kind(run_cfg, "bkg", for_inference=True))

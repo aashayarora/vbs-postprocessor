@@ -27,6 +27,8 @@ DEFAULT_PRESEL_DIR = str(Path(HERE).parent.parent / "cmstas-run3-vbsvvh" / "pres
 SIGNAL_POINT_RE = r"VBS[A-Z]+H(?:_[OS]S)?_c2v[0-9p]+_c3_[0-9p]+"
 PASSTHROUGH = ["run", "luminosityBlock", "event", "shortname", "year"]
 
+EXCLUDED_SAMPLES_RE = r"^(WJetsToLNu_TuneCP5_13TeV-amcatnloFXFX|QCD_Bin-PT-)"
+
 
 def load_helpers():
     """Declare the C++ helper functions (dR / pairing / invariant-mass) into cling."""
@@ -51,7 +53,7 @@ def detect_variations(columns) -> list[str]:
     return out
 
 
-def book_variation(df, channel, sfx, passthrough, cutflow=None):
+def book_variation(df, channel, sfx, passthrough, cutflow=None, pdf_weights=False):
     df = build_collections(df, sfx)
 
     flag = f"passes_{channel}_{'nom' if not sfx else sfx}"
@@ -64,7 +66,7 @@ def book_variation(df, channel, sfx, passthrough, cutflow=None):
         cutflow.add(df, "channel selection (nominal)")
 
     df, cand_cols = RECONSTRUCTORS[channel](df, cutflow)
-    df, weight_cols = add_weight_columns(df)
+    df, weight_cols = add_weight_columns(df, pdf_weights=pdf_weights)
 
     present = set(str(c) for c in df.GetColumnNames())
     out_cols = [c for c in passthrough if c in present] + weight_cols + cand_cols
@@ -106,8 +108,10 @@ def process_file(input_files, tree, channel, nominal_only, want_cutflow=False):
     print(f"[postprocess] channel={channel}  files={len(input_files)}  "
           f"variations={[v or 'nominal' for v in variations]}")
 
+    pdf_weights = all(re.search(SIGNAL_POINT_RE, str(f)) for f in input_files)
     cf = Cutflow() if want_cutflow else None
-    booked = [(sfx, *book_variation(df, channel, sfx, PASSTHROUGH, cf if sfx == "" else None))
+    booked = [(sfx, *book_variation(df, channel, sfx, PASSTHROUGH, cf if sfx == "" else None,
+                                    pdf_weights=pdf_weights))
               for sfx in variations]
     pieces = []
     for sfx, result, cols, node in booked:
@@ -243,6 +247,10 @@ def main(argv=None):
                         "--files-per-process do not apply.")
     p.add_argument("--retries", type=int, default=2,
                    help="dask mode: rerun a file whose task raised up to this many times (default: 2)")
+    p.add_argument("--exclude-samples", default=EXCLUDED_SAMPLES_RE,
+                   help="regex matched against each input's sample directory name; matching "
+                        f"inputs are dropped (default: '{EXCLUDED_SAMPLES_RE}', the MC sets that "
+                        "overlap the HT-binned W+jets / QCD; '' keeps everything)")
     p.add_argument("--cutflow-rows-out", help=argparse.SUPPRESS)  # child mode: stream rows here
     args = p.parse_args(argv)
 
@@ -253,6 +261,16 @@ def main(argv=None):
     input_files = [f for pat in args.input for f in (sorted(glob.glob(pat)) or [pat])]
     if not input_files:
         p.error(f"no input files matched: {args.input}")
+    if args.exclude_samples:
+        exclude_re = re.compile(args.exclude_samples)
+        dropped = sorted({Path(f).parent.name for f in input_files
+                          if exclude_re.search(Path(f).parent.name)})
+        input_files = [f for f in input_files if not exclude_re.search(Path(f).parent.name)]
+        for s in dropped:
+            print(f"[postprocess] excluding overlapping sample {s}")
+        if not input_files:
+            print("[postprocess] every input matched --exclude-samples; nothing to do")
+            return 0
 
     want_cf = bool(args.cutflow) or bool(args.cutflow_rows_out)
     split_re = re.compile(args.cutflow_split) if args.cutflow_split else None
@@ -369,7 +387,10 @@ def _emit_cutflow(args, input_files, cf_acc, n_uncounted=0):
     jobgroups = sorted({Path(f).parent.parent.name for f in input_files})
     logs_dir = Path(args.cutflow_logs) if args.cutflow_logs else \
         Path(os.environ.get("VBSVVH_PRESEL_DIR", DEFAULT_PRESEL_DIR)) / "condor" / "jobs"
-    all_logs = [str(p) for jg in jobgroups for p in (logs_dir / jg).rglob("*.stdout")]
+    # Job dirs are named <sample>_<N> (or <sample>), so --exclude-samples applies to them too.
+    exclude_re = re.compile(args.exclude_samples) if args.exclude_samples else None
+    all_logs = [str(p) for jg in jobgroups for p in (logs_dir / jg).rglob("*.stdout")
+                if exclude_re is None or not exclude_re.search(p.parent.name)]
     out = Path(args.cutflow)
 
     for group, rows_dict in sorted(cf_acc.items()):

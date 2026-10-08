@@ -7,12 +7,15 @@ def _c(base: str, sfx: str) -> str:
 
 WEIGHTSYST_PREFIX = "weightsyst_"
 
+PDF_WEIGHT_PREFIX = "pdfweight_"
+N_PDF_MEMBERS = 100
+
 
 def discover_weight_systs(cols):
     return sorted(c for c in cols if c.startswith(WEIGHTSYST_PREFIX))
 
 
-def add_weight_columns(df):
+def add_weight_columns(df, pdf_weights=False):
     cols = set(str(c) for c in df.GetColumnNames())
     out = [w for w in ("weight", "ewkweight") if w in cols]
     for br in discover_weight_systs(cols):
@@ -21,6 +24,13 @@ def add_weight_columns(df):
         df = df.Define(up, f"{safe} ? (float)({br}[1] / {br}[0]) : 1.0f")
         df = df.Define(dn, f"{safe} ? (float)({br}[2] / {br}[0]) : 1.0f")
         out += [up, dn]
+    if pdf_weights and "LHEPdfWeight" in cols:
+        # A member the event lacks (or a zero nominal) reads 1: no variation from it.
+        for i in range(1, N_PDF_MEMBERS + 1):
+            name = f"{PDF_WEIGHT_PREFIX}{i}"
+            safe = f"(LHEPdfWeight.size() > {i} && LHEPdfWeight[0] != 0.f)"
+            df = df.Define(name, f"{safe} ? (float)(LHEPdfWeight[{i}] / LHEPdfWeight[0]) : 1.0f")
+            out.append(name)
     return df, out
 
 

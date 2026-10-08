@@ -129,6 +129,15 @@ def preferred_branches(present):
 UP_SUFFIX = "_syst_up"
 DN_SUFFIX = "_syst_dn"
 
+# PDF: the post-processor writes the signal's per-member LHEPdfWeight ratios (members
+# 1-100 of the Hessian set, member 0 = nominal) as flat pdfweight_<i> columns. They are
+# read only for signal-only inference (run_abcd.py --signal, i.e. the per-point cards),
+# and the datacard combines them per ABCD region as the Run 2 semileptonic script did:
+# kappa = 1 + sqrt(sum_i (Y_i - Y_0)^2) / Y_0, one symmetric nuisance correlated everywhere.
+PDF_WEIGHTS = "pdfweight"
+PDF_WEIGHT_PREFIX = PDF_WEIGHTS + "_"
+PDF_NUISANCE = "CMS_LHE_weights_pdf_vbsvvh"
+
 
 def ratio_columns(branch):
     """The (up, down) ratio column names written for one systematic branch."""

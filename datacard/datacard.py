@@ -11,8 +11,8 @@ from scipy.stats import gamma
 # The systematics definition lives with the code that writes the predictions, so
 # the branch list and nuisance naming cannot drift between the two.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "abcd"))
-from systematics import (SYST_WEIGHTS, jec_nuisance_name, nuisance_name,
-                         preferred_branches, ratio_columns)
+from systematics import (PDF_NUISANCE, PDF_WEIGHT_PREFIX, SYST_WEIGHTS, jec_nuisance_name,
+                         nuisance_name, preferred_branches, ratio_columns)
 
 
 def get_poisson_uncertainty(n):
@@ -138,6 +138,21 @@ def compute_syst_kappas(sig_df, region_dfs, proc_name, scan_name):
         kappas[nuisance_name(branch, proc_name, scan_name)] = per_region
 
     return kappas
+
+
+def compute_pdf_kappas(region_dfs):
+    per_region = {}
+    for region_id, df_r in region_dfs.items():
+        cols = [c for c in df_r.columns if c.startswith(PDF_WEIGHT_PREFIX)]
+        w = df_r["weight"].to_numpy(dtype=float)
+        y0 = w.sum()
+        if not cols or len(df_r) == 0 or y0 <= 0:
+            per_region[region_id] = None
+            continue
+        yi = w @ df_r[cols].to_numpy(dtype=float)
+        kappa = 1.0 + np.sqrt(np.sum((yi - y0) ** 2)) / y0
+        per_region[region_id] = kappa if np.isfinite(kappa) else None
+    return per_region
 
 
 def _jec_region_kappas(nom, sub, region_final_cuts):
@@ -362,6 +377,17 @@ def create_abcd_datacard_single(process_name, out_name, scan_name, scan_info, or
             cells = [kappa_cell(per_region.get(r)) for r in ["A", "B", "C", "D"]]
             f.write(f"{nuisance:<50}{'lnN':<10}{'-':<50}{'-':<50}{'-':<50}{'-':<50}"
                     f"{cells[0]:<20}{cells[1]:<20}{cells[2]:<20}{cells[3]:<20}\n")
+        pdf_kappas = compute_pdf_kappas(region_sig_dfs)
+        pdf_cells = ["-" if pdf_kappas.get(r) is None else f"{pdf_kappas[r]:.4f}"
+                     for r in ["A", "B", "C", "D"]]
+        if any(c not in ("-", "1.0000") for c in pdf_cells):
+            f.write(f"{PDF_NUISANCE:<50}{'lnN':<10}{'-':<50}{'-':<50}{'-':<50}{'-':<50}"
+                    f"{pdf_cells[0]:<20}{pdf_cells[1]:<20}{pdf_cells[2]:<20}{pdf_cells[3]:<20}\n")
+        elif not any(c.startswith(PDF_WEIGHT_PREFIX) for c in sig_df.columns):
+            print(f"  WARNING: {scan_name}: signal predictions carry no {PDF_WEIGHT_PREFIX}* "
+                  f"columns (signal-only inference with the current post-processor adds them); "
+                  f"no PDF nuisance written")
+
         if not syst_kappas:
             if not available_systematics(sig_df):
                 print(f"  WARNING: {scan_name}: signal predictions carry no systematic weight "

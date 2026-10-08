@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 from tqdm import tqdm
 
 from common import MISSING_VALUE, apply_mask, concat_chunks, data_length, evaluate_expression
-from systematics import SYST_WEIGHTS, ratio_columns
+from systematics import PDF_WEIGHT_PREFIX, PDF_WEIGHTS, SYST_WEIGHTS, ratio_columns
 
 
 def _to_flat_numpy(column):
@@ -42,6 +42,9 @@ def _read_parquet_frame(path, branches, dataset_idx, sample_idx, variation="nomi
     for branch in branches:
         if branch in SYST_WEIGHTS:
             read_cols.extend(c for c in ratio_columns(branch) if c in available)
+        elif branch == PDF_WEIGHTS:  # every per-member PDF column present (forgiven when none)
+            read_cols.extend(sorted((c for c in available if c.startswith(PDF_WEIGHT_PREFIX)),
+                                    key=lambda c: int(c[len(PDF_WEIGHT_PREFIX):])))
         elif branch in available:
             read_cols.append(branch)
         else:
