@@ -198,6 +198,11 @@ class RunConfig:
         return self.raw.get("preselection")
 
     @property
+    def missing_fill(self):
+        """Scaled value of missing inputs (see preprocessing._scale_column)."""
+        return float(self.raw.get("missing_fill", 0.0))
+
+    @property
     def plot_style(self):
         """CMS header settings for every figure this run draws (see style.py).
 
@@ -253,5 +258,6 @@ class RunConfig:
                 lr_scheduler_patience=cfg.get("lr_scheduler_patience", 40),
                 lr_scheduler_factor=cfg.get("lr_scheduler_factor", 0.5),
                 lr_scheduler_min_lr=cfg.get("lr_scheduler_min_lr", 1e-6),
+                disco_warmup_epochs=cfg.get("disco_warmup_epochs", 0),
             )
         return kwargs

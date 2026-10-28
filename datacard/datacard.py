@@ -141,6 +141,15 @@ def compute_syst_kappas(sig_df, region_dfs, proc_name, scan_name):
 
 
 def compute_pdf_kappas(region_dfs):
+    """Symmetric PDF lnN kappa per ABCD region for the signal, as in the Run 2 semileptonic
+    datacard script: with Y_0 the nominal region yield and Y_i its yield under PDF member i
+    (the pdfweight_<i> ratios, i = 1..100 of the Hessian set),
+
+        kappa = 1 + sqrt(sum_i (Y_i - Y_0)^2) / Y_0.
+
+    Returns ``{region: kappa or None}``; None where the region has no signal yield or the
+    predictions carry no PDF columns (they are only read for signal-only inference).
+    """
     per_region = {}
     for region_id, df_r in region_dfs.items():
         cols = [c for c in df_r.columns if c.startswith(PDF_WEIGHT_PREFIX)]
@@ -377,6 +386,7 @@ def create_abcd_datacard_single(process_name, out_name, scan_name, scan_info, or
             cells = [kappa_cell(per_region.get(r)) for r in ["A", "B", "C", "D"]]
             f.write(f"{nuisance:<50}{'lnN':<10}{'-':<50}{'-':<50}{'-':<50}{'-':<50}"
                     f"{cells[0]:<20}{cells[1]:<20}{cells[2]:<20}{cells[3]:<20}\n")
+        # PDF: one symmetric lnN, correlated across channels, eras and scans.
         pdf_kappas = compute_pdf_kappas(region_sig_dfs)
         pdf_cells = ["-" if pdf_kappas.get(r) is None else f"{pdf_kappas[r]:.4f}"
                      for r in ["A", "B", "C", "D"]]

@@ -106,6 +106,12 @@ n_epochs: 1000
 architecture: [128, 64, 32, 16]
 bce_weight: 1.0
 disco_lambda: 10.0
+# version_0 collapsed: the disco term pinned the background output to a constant
+# (sigmoid of the last bias, 0.4057) for 93% of events. Ramp it in instead, and keep
+# missing objects (no H / no V candidate, unfilled resolved pairs) apart from real
+# ones at the bottom of the scaled range.
+disco_warmup_epochs: 20
+missing_fill: -1.0
 
 use_batchnorm: true
 dropout: 0.2

@@ -119,7 +119,7 @@ def run_training(
     trainer = Trainer(
         max_epochs=max_epochs,
         accelerator="gpu" if use_gpu else "cpu",
-        devices=devices if use_gpu else None,
+        devices=devices if use_gpu else 1,
         logger=logger,
         check_val_every_n_epoch=check_val_every_n_epoch,
         callbacks=callbacks,

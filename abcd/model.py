@@ -46,6 +46,7 @@ class ABCDLightningModule(pl.LightningModule):
         lr_scheduler_patience=10,
         lr_scheduler_factor=0.5,
         lr_scheduler_min_lr=1e-6,
+        disco_warmup_epochs=0,
     ):
         super().__init__()
         if flavor not in {"single", "double"}:
@@ -86,8 +87,18 @@ class ABCDLightningModule(pl.LightningModule):
         self.lr_scheduler_patience = lr_scheduler_patience
         self.lr_scheduler_factor = lr_scheduler_factor
         self.lr_scheduler_min_lr = lr_scheduler_min_lr
+        self.disco_warmup_epochs = disco_warmup_epochs
 
         self.save_hyperparameters()
+
+    def _train_disco_lambda(self):
+        """disco_lambda ramped linearly from 0 over the first ``disco_warmup_epochs``, so
+        the classifier learns before the decorrelation term can pin the background output
+        to a constant (its trivial minimum). Validation always uses the full lambda, so
+        val_loss -- which picks the checkpoints -- is the same objective in every epoch."""
+        if self.disco_warmup_epochs <= 0:
+            return self.disco_lambda
+        return self.disco_lambda * min(1.0, self.current_epoch / self.disco_warmup_epochs)
 
     def forward(self, x):
         if self.flavor == "single":
@@ -97,7 +108,9 @@ class ABCDLightningModule(pl.LightningModule):
         logits_1 = self.model[1](x)
         return torch.stack([logits_0, logits_1], dim=1)
 
-    def _loss_components(self, batch):
+    def _loss_components(self, batch, disco_lambda=None):
+        if disco_lambda is None:
+            disco_lambda = self.disco_lambda
         data, constraint_data, labels, weights = batch
         logits = self(data)
 
@@ -151,7 +164,7 @@ class ABCDLightningModule(pl.LightningModule):
                 disco_term = distance_corr(bkg_score_0, bkg_score_1, bkg_weights, power=1)
 
         total_loss = (
-            self.bce_weight * bce + self.disco_lambda * disco_term
+            self.bce_weight * bce + disco_lambda * disco_term
         )
 
         return {
@@ -162,7 +175,7 @@ class ABCDLightningModule(pl.LightningModule):
         }
 
     def training_step(self, batch, batch_idx):
-        losses = self._loss_components(batch)
+        losses = self._loss_components(batch, disco_lambda=self._train_disco_lambda())
         self.log("train_loss", losses["loss"], on_step=False, on_epoch=True, prog_bar=True)
         self.log("train_bce", losses["bce"], on_step=False, on_epoch=True)
         for idx, bce_i in enumerate(losses["bce_components"]):

@@ -71,7 +71,8 @@ def split_for_training(run_cfg, data, scaler_output_path=None):
     """Preprocess ``normalized_training_data`` and split it exactly as the training does;
     returns the loaders, the train/val indices and the preprocessed data."""
     data = preprocess_data(data, run_cfg.training_features, run_cfg.feature_transforms,
-                           run_cfg.constraint_var, scaler_output_path=scaler_output_path)
+                           run_cfg.constraint_var, scaler_output_path=scaler_output_path,
+                           missing_fill=run_cfg.missing_fill)
     train_loader, val_loader, train_idx, val_idx = make_dataloaders(
         data, run_cfg.training_features, run_cfg.constraint_var, run_cfg.batch_size)
     return train_loader, val_loader, train_idx, val_idx, data

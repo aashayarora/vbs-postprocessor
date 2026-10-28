@@ -46,16 +46,16 @@ def apply_derived_vars(data, derived_vars_cfg):
     return out
 
 
-def _fit_minmax_scale(values, valid_mask):
-    scaled = np.zeros_like(values, dtype=np.float64)
+def _fit_minmax_scale(values, valid_mask, missing_fill):
+    scaled = np.full_like(values, missing_fill, dtype=np.float64)
     scaler = MinMaxScaler()
     scaler.fit(values[valid_mask].reshape(-1, 1))
     scaled[valid_mask] = scaler.transform(values[valid_mask].reshape(-1, 1)).ravel()
     return scaled, float(scaler.data_min_[0]), float(scaler.data_max_[0])
 
 
-def _apply_saved_scale(values, valid_mask, fmin, fmax):
-    scaled = np.zeros_like(values, dtype=np.float64)
+def _apply_saved_scale(values, valid_mask, fmin, fmax, missing_fill):
+    scaled = np.full_like(values, missing_fill, dtype=np.float64)
     fmin = float(fmin)
     data_range = float(fmax) - fmin
     scale = 1.0 / data_range if data_range != 0 else 1.0
@@ -63,8 +63,15 @@ def _apply_saved_scale(values, valid_mask, fmin, fmax):
     return scaled
 
 
-def _scale_column(out, fitted_params, name, transform, saved):
-    """Transform + minmax-scale one column in place; record the fitted params."""
+def _scale_column(out, fitted_params, name, transform, saved, missing_fill):
+    """Transform + minmax-scale one column in place; record the fitted params.
+
+    Missing entries (MISSING_VALUE, non-finite, or non-positive under ``log``) get
+    ``missing_fill``. The default 0.0 coincides with the scaled minimum of the valid
+    values, so a missing object looks like a real one at the bottom of the range; a
+    value outside [0, 1] such as -1.0 keeps the two apart. A saved scaler carries its
+    own fill (0.0 for scalers written before the option existed).
+    """
     arr = np.asarray(out[name], dtype=np.float64)
     valid = (arr != MISSING_VALUE) & np.isfinite(arr)
     if transform == "log":
@@ -74,21 +81,24 @@ def _scale_column(out, fitted_params, name, transform, saved):
         arr[valid] = np.log(arr[valid])
 
     if saved is not None:
-        out[name] = _apply_saved_scale(arr, valid, saved["min"], saved["max"])
-        fitted_params[name] = {"transform": transform, "min": float(saved["min"]), "max": float(saved["max"])}
+        fill = float(saved.get("missing_fill", 0.0))
+        out[name] = _apply_saved_scale(arr, valid, saved["min"], saved["max"], fill)
+        fitted_params[name] = {"transform": transform, "min": float(saved["min"]),
+                               "max": float(saved["max"]), "missing_fill": fill}
         return
 
     if valid.sum() == 0:
         logging.warning("Feature '%s' has no valid samples, skipping scaler fit", name)
-        out[name] = np.zeros_like(arr, dtype=np.float64)
-        fitted_params[name] = {"transform": transform, "min": 0.0, "max": 1.0}
+        out[name] = np.full_like(arr, missing_fill, dtype=np.float64)
+        fitted_params[name] = {"transform": transform, "min": 0.0, "max": 1.0, "missing_fill": missing_fill}
         return
 
-    out[name], fmin, fmax = _fit_minmax_scale(arr, valid)
-    fitted_params[name] = {"transform": transform, "min": fmin, "max": fmax}
+    out[name], fmin, fmax = _fit_minmax_scale(arr, valid, missing_fill)
+    fitted_params[name] = {"transform": transform, "min": fmin, "max": fmax, "missing_fill": missing_fill}
 
 
-def preprocess_data(data, training_features, feature_transforms, constraint_var, scaler_output_path=None, scaler_params=None):
+def preprocess_data(data, training_features, feature_transforms, constraint_var, scaler_output_path=None,
+                    scaler_params=None, missing_fill=0.0):
     out = {k: np.asarray(v).copy() for k, v in data.items()}
     cols_to_clean = list(dict.fromkeys(training_features + [constraint_var]))
     for col in cols_to_clean:
@@ -110,9 +120,10 @@ def preprocess_data(data, training_features, feature_transforms, constraint_var,
 
     fitted_params = {}
     for feat in training_features:
-        _scale_column(out, fitted_params, feat, feature_transforms.get(feat, "none"), _saved_for(feat))
+        _scale_column(out, fitted_params, feat, feature_transforms.get(feat, "none"), _saved_for(feat),
+                      missing_fill)
     if constraint_var not in training_features:
-        _scale_column(out, fitted_params, constraint_var, "none", _saved_for(constraint_var))
+        _scale_column(out, fitted_params, constraint_var, "none", _saved_for(constraint_var), missing_fill)
 
     if scaler_output_path is not None:
         scaler_out = {
